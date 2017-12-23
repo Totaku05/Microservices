@@ -1,23 +1,15 @@
 package microservices.identification.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import microservices.identification.bloggers.Blogger;
-import microservices.identification.bloggers.Video;
 import microservices.identification.model.ContactInfo;
 import microservices.identification.model.User;
-import microservices.identification.orders.Advertiser;
-import microservices.identification.orders.Order;
 import microservices.identification.service.ContactInfoService;
 import microservices.identification.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,8 +56,26 @@ public class RestApiController {
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/user/{login}/{password}", method = RequestMethod.GET)
+	public ResponseEntity<?> Identify(@PathVariable("login") String login, @PathVariable("password") String password) {
+		logger.info("Fetching User with login {}", login);
+		List<User> users = userService.findAllUsers();
+		if (users.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+		for(User user : users)
+			if(user.getLogin().equals(login))
+			{
+				if(user.getPassword().equals(password))
+					return new ResponseEntity<User>(user, HttpStatus.OK);
+				else return new ResponseEntity(new CustomErrorType("Bad password"), HttpStatus.BAD_REQUEST);
+			}
+		return new ResponseEntity(new CustomErrorType("User with login " + login
+				+ " not found"), HttpStatus.NOT_FOUND);
+	}
+
 	@RequestMapping(value = "/user/", method = RequestMethod.POST)
-	public ResponseEntity<?> createUser(@RequestBody User user, @RequestBody Advertiser advertiser, @RequestBody Blogger blogger, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createUser(@RequestBody User user, UriComponentsBuilder ucBuilder) {
 		logger.info("Creating User : {}", user);
 
 		if (userService.isUserExist(user)) {
@@ -75,54 +85,9 @@ public class RestApiController {
 		}
 		userService.saveUser(user);
 		contactInfoService.saveInfo(user.getContactInfo());
-
-		RestTemplate template = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		ResponseEntity<String> response = null;
-		if(user.getRole().equals("Advertiser")) {
-			MultiValueMap<String, Advertiser> map = new LinkedMultiValueMap<String, Advertiser>();
-			map.add("advertiser", advertiser);
-			HttpEntity<MultiValueMap<String, Advertiser>> request = new HttpEntity<MultiValueMap<String, Advertiser>>(map, headers);
-			response = template.postForEntity("http://localhost:8585/orders/advertiser/", request, String.class);
-		}
-		if(user.getRole().equals("Blogger")) {
-			MultiValueMap<String, Blogger> map = new LinkedMultiValueMap<String, Blogger>();
-			map.add("blogger", blogger);
-			HttpEntity<MultiValueMap<String, Blogger>> request = new HttpEntity<MultiValueMap<String, Blogger>>(map, headers);
-			response = template.postForEntity("http://localhost:9090/bloggers/blogger/", request, String.class);
-		}
-		return response;
-	}
-
-	@RequestMapping(value = "/video/", method = RequestMethod.POST)
-	public ResponseEntity<?> createVideo(@RequestBody Video video, UriComponentsBuilder ucBuilder) {
-		logger.info("Creating Video : {}", video);
-
-		RestTemplate template = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		MultiValueMap<String, Video> map= new LinkedMultiValueMap<String, Video>();
-		map.add("video", video);
-		HttpEntity<MultiValueMap<String, Video>> request = new HttpEntity<MultiValueMap<String, Video>>(map, headers);
-		ResponseEntity<String> response = template.postForEntity( "http://localhost:9090/bloggers/video/", request , String.class);
-
-		return response;
-	}
-
-	@RequestMapping(value = "/order/", method = RequestMethod.POST)
-	public ResponseEntity<?> createOrder(@RequestBody Order order, UriComponentsBuilder ucBuilder) {
-		logger.info("Creating Order : {}", order);
-
-		RestTemplate template = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		MultiValueMap<String, Order> map= new LinkedMultiValueMap<String, Order>();
-		map.add("order", order);
-		HttpEntity<MultiValueMap<String, Order>> request = new HttpEntity<MultiValueMap<String, Order>>(map, headers);
-		ResponseEntity<String> response = template.postForEntity( "http://localhost:8585/orders/order/", request , String.class);
-
-		return response;
+		headers.setLocation(ucBuilder.path("/user/{id}").buildAndExpand(user.getId()).toUri());
+		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
@@ -151,21 +116,6 @@ public class RestApiController {
 		userService.updateUser(currentUser);
 		contactInfoService.updateInfo(currentInfo);
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
-	}
-
-	@RequestMapping(value = "/video/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateVideo(@PathVariable("id") int id, @RequestBody Video video) {
-		logger.info("Updating Video with id {}", id);
-
-		RestTemplate template = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		/*headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		Map<String, Video> param = new HashMap<String, Video>();
-		param.put("video",video);
-		HttpEntity<String> requestEntity = new HttpEntity<>(new Video(), headers);
-		ResponseEntity<Video> response = template.put( "http://localhost:9090/bloggers/video/", requestEntity, param);*/
-
-		return new ResponseEntity<Video>(video, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
