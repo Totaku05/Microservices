@@ -1,0 +1,19 @@
+---
+server:
+  port: 9090
+  contextPath: /bloggers
+
+datasource:
+  microservice_app:
+    url: jdbc:mysql://localhost:3306/bloggers
+    username: root
+    password: 123456789
+    driverClassName: com.mysql.jdbc.Driver
+    defaultSchema:
+    maxPoolSize: 20
+    hibernate:
+      hbm2ddl.method: none
+      show_sql: true
+      format_sql: true
+      dialect: org.hibernate.dialect.MySQLDialect
+

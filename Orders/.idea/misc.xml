@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_3" default="false" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/classes" />
+  </component>
+  <component name="SbtLocalSettings">
+    <option name="modificationStamps">
+      <map>
+        <entry key="$USER_HOME$/IdeaProjects/Scala1" value="1473932862871" />
+        <entry key="$USER_HOME$/IdeaProjects/example" value="1473936083196" />
+        <entry key="$USER_HOME$/IdeaProjects/forcomp" value="1475128324330" />
+        <entry key="$USER_HOME$/IdeaProjects/funsets" value="1474217977058" />
+        <entry key="$USER_HOME$/IdeaProjects/objsets" value="1474546340378" />
+        <entry key="$USER_HOME$/IdeaProjects/patmat" value="1474732209780" />
+        <entry key="$USER_HOME$/IdeaProjects/recfun" value="1473953507824" />
+      </map>
+    </option>
+    <option name="externalProjectsViewState">
+      <projects_view />
+    </option>
+  </component>
+</project>
