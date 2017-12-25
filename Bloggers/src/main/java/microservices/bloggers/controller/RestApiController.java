@@ -6,6 +6,8 @@ import microservices.bloggers.model.Blogger;
 import microservices.bloggers.model.Video;
 import microservices.bloggers.service.BloggerService;
 import microservices.bloggers.service.VideoService;
+import microservices.bloggers.value_object.Money;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +100,7 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/blogger/", method = RequestMethod.POST)
-	public ResponseEntity<?> createBlogger(@RequestBody Blogger blogger, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createBlogger(@RequestBody Blogger blogger) {
 		logger.info("Creating Blogger : {}", blogger);
 
 		if (bloggerService.isBloggerExist(blogger)) {
@@ -107,14 +109,11 @@ public class RestApiController {
 					blogger.getId() + " already exist."),HttpStatus.CONFLICT);
 		}
 		bloggerService.saveBlogger(blogger);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/blogger/{id}").buildAndExpand(blogger.getId()).toUri());
-		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+		return new ResponseEntity<Blogger>(blogger, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/video/", method = RequestMethod.POST)
-	public ResponseEntity<?> createVideo(@RequestBody Video video, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createVideo(@RequestBody Video video) {
 		logger.info("Creating Video : {}", video);
 
 		if (videoService.isVideoExist(video)) {
@@ -123,24 +122,34 @@ public class RestApiController {
 					video.getId() + " already exist."),HttpStatus.CONFLICT);
 		}
 		videoService.saveVideo(video);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/video/{id}").buildAndExpand(video.getId()).toUri());
-		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+		return new ResponseEntity<Video>(video, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/blogger/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateBlogger(@PathVariable("id") int id, @RequestBody Blogger blogger) {
+	public ResponseEntity<?> updateBlogger(@PathVariable("id") int id, @RequestBody JSONObject object) {
 		logger.info("Updating Blogger with id {}", id);
 
 		Blogger currentBlogger = bloggerService.findById(id);
 
 		if (currentBlogger == null) {
 			logger.error("Unable to update. Blogger with id {} not found.", id);
-			return new ResponseEntity(new CustomErrorType("Unable to upate. Blogger with id " + id + " not found."),
+			return new ResponseEntity(new CustomErrorType("Unable to update. Blogger with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
 
+		Blogger blogger = new Blogger();
+        try {
+            blogger.setLogin(object.getString("login"));
+            blogger.setAccount(new Money(object.getJSONObject("account").getDouble("sum")));
+            blogger.setMinPrice(new Money(object.getJSONObject("minPrice").getDouble("sum")));
+            blogger.setCountOfSubscribers(object.getInt("countOfSubscribers"));
+            blogger.setStatus(object.getString("status"));
+        }
+        catch (Throwable t)
+        {
+            return new ResponseEntity(new CustomErrorType("Unable to update. JSONObject opening problem."),
+                    HttpStatus.NOT_FOUND);
+        }
 		currentBlogger.setLogin(blogger.getLogin());
 		currentBlogger.setAccount(blogger.getAccount());
 		currentBlogger.setMinPrice(blogger.getMinPrice());
@@ -160,7 +169,7 @@ public class RestApiController {
 
 		if (currentVideo == null) {
 			logger.error("Unable to update. Video with id {} not found.", id);
-			return new ResponseEntity(new CustomErrorType("Unable to upate. Video with id " + id + " not found."),
+			return new ResponseEntity(new CustomErrorType("Unable to update. Video with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
 

@@ -1,16 +1,21 @@
 package microservices.orders.bloggers;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import microservices.orders.value_object.Money;
 
 import java.io.Serializable;
 
 public class Blogger {
+    @JsonProperty("id")
     private Integer id;
 
+    @JsonProperty("minPrice")
     private Money minPrice;
 
+    @JsonProperty("countOfSubscribers")
     private Integer countOfSubscribers;
 
+    @JsonProperty("status")
     private String status;
 
     public Integer getId() {

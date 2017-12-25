@@ -1,6 +1,6 @@
 package microservices.orders.controller;
 
-import java.util.List;
+import java.util.*;
 
 import microservices.orders.bloggers.Blogger;
 import microservices.orders.bloggers.Video;
@@ -51,9 +51,9 @@ public class RestApiController {
 	@RequestMapping(value = "/order/", method = RequestMethod.GET)
 	public ResponseEntity<List<Order>> listAllOrders() {
 		RestTemplate template = new RestTemplate();
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/video/", String.class);
+		//ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/video/", String.class);
 		//ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/blogger/", String.class);
-		JSONArray array;
+		/*JSONArray array;
 		try {
 			array = new JSONArray(resp.getBody());
 			Video video = new Video();
@@ -66,8 +66,8 @@ public class RestApiController {
 			blogger.setCountOfSubscribers(array.getJSONObject(0).getInt("countOfSubscribers"));
 			blogger.setStatus(array.getJSONObject(0).getString("status"));
 			blogger.setMinPrice(new Money(array.getJSONObject(0).getJSONObject("minPrice").getDouble("sum")));*/
-		}
-		catch (Throwable t){}
+		/*}
+		catch (Throwable t){}*/
 
 		List<Order> orders = orderService.findAllOrders();
 		if (orders.isEmpty()) {
