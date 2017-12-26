@@ -1,7 +1,5 @@
 package microservices.orders.model;
 
-import microservices.orders.value_object.Money;
-
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Objects;
@@ -43,9 +41,6 @@ public class Order {
     @Column(name = "owner", nullable = false)
     private int owner;
 
-    @Transient
-    private Money money;
-
     public Integer getId() {
         return id;
     }
@@ -78,14 +73,12 @@ public class Order {
         this.tag = tag;
     }
 
-    public Money getSum() {
-        money = new Money(sum);
-        return money;
+    public double getSum() {
+        return sum;
     }
 
-    public void setSum(Money money) {
-        this.money = money;
-        sum = money.getSum();
+    public void setSum(double sum) {
+        this.sum = sum;
     }
 
     public Date getStartDate() {

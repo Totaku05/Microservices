@@ -1,7 +1,5 @@
 package microservices.identification.bloggers;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Date;
 import java.sql.Time;
 import java.util.Objects;

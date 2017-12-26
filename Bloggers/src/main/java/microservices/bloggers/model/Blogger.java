@@ -1,7 +1,5 @@
 package microservices.bloggers.model;
 
-import microservices.bloggers.value_object.Money;
-
 import javax.persistence.*;
 import java.util.Objects;
 
@@ -27,9 +25,6 @@ public class Blogger {
     @Column(name = "login", nullable = false)
     private String login;
 
-    @Transient
-    private Money acc, price;
-
     public Integer getId() {
         return id;
     }
@@ -38,24 +33,20 @@ public class Blogger {
         this.id = id;
     }
 
-    public Money getAccount() {
-        acc = new Money(account);
-        return acc;
+    public Double getAccount() {
+        return account;
     }
 
-    public void setAccount(Money money) {
-        acc = money;
-        account = money.getSum();
+    public void setAccount(Double account) {
+        this.account = account;
     }
 
-    public Money getMinPrice() {
-        price = new Money(minPrice);
-        return price;
+    public Double getMinPrice() {
+        return minPrice;
     }
 
-    public void setMinPrice(Money money) {
-        price = money;
-        minPrice = money.getSum();
+    public void setMinPrice(Double minPrice) {
+        this.minPrice = minPrice;
     }
 
     public Integer getCountOfSubscribers() {

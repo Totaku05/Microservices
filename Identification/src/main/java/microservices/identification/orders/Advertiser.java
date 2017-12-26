@@ -1,15 +1,11 @@
 package microservices.identification.orders;
 
-import microservices.identification.value_object.Money;
-
 public class Advertiser {
     private Integer id;
 
     private double account;
 
     private String login;
-
-    private Money money;
 
     public Integer getId() {
         return id;
@@ -19,14 +15,12 @@ public class Advertiser {
         this.id = id;
     }
 
-    public Money getAccount() {
-        money = new Money(account);
-        return money;
+    public Double getAccount() {
+        return account;
     }
 
-    public void setAccount(Money money) {
-        this.money = money;
-        account = money.getSum();
+    public void setAccount(Double account) {
+        this.account = account;
     }
 
     public String getLogin() {

@@ -1,8 +1,5 @@
 package microservices.identification.bloggers;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import microservices.identification.value_object.Money;
-
 import java.util.Objects;
 
 public class Blogger {
@@ -18,8 +15,6 @@ public class Blogger {
 
     private String login;
 
-    private Money acc, price;
-
     public Integer getId() {
         return id;
     }
@@ -28,24 +23,20 @@ public class Blogger {
         this.id = id;
     }
 
-    public Money getAccount() {
-        acc = new Money(account);
-        return acc;
+    public Double getAccount() {
+        return account;
     }
 
-    public void setAccount(Money money) {
-        acc = money;
-        account = money.getSum();
+    public void setAccount(Double account) {
+        this.account = account;
     }
 
-    public Money getMinPrice() {
-        price = new Money(minPrice);
-        return price;
+    public Double getMinPrice() {
+        return minPrice;
     }
 
-    public void setMinPrice(Money money) {
-        price = money;
-        minPrice = money.getSum();
+    public void setMinPrice(Double minPrice) {
+        this.minPrice = minPrice;
     }
 
     public Integer getCountOfSubscribers() {

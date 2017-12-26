@@ -1,8 +1,5 @@
 package microservices.identification.orders;
 
-import microservices.identification.value_object.Money;
-
-import javax.persistence.*;
 import java.util.Date;
 import java.util.Objects;
 
@@ -28,8 +25,6 @@ public class Order {
     private int blogger;
 
     private int owner;
-
-    private Money money;
 
     public Integer getId() {
         return id;
@@ -63,14 +58,12 @@ public class Order {
         this.tag = tag;
     }
 
-    public Money getSum() {
-        money = new Money(sum);
-        return money;
+    public double getSum() {
+        return sum;
     }
 
-    public void setSum(Money money) {
-        this.money = money;
-        sum = money.getSum();
+    public void setSum(double sum) {
+        this.sum = sum;
     }
 
     public Date getStartDate() {

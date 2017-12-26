@@ -1,5 +1,6 @@
 package microservices.orders.service;
 
+import java.util.Iterator;
 import java.util.List;
 
 import microservices.orders.model.Order;
@@ -49,10 +50,12 @@ public class OrderServiceImpl implements OrderService {
 	{
 		List<Order> list = orderRepository.findAll();
 
-		for(Order order : list)
+		Iterator<Order> it = list.iterator();
+		while (it.hasNext())
 		{
+			Order order = it.next();
 			if(order.getOwner() != id)
-				list.remove(order);
+				it.remove();
 		}
 		return list;
 	}
@@ -61,10 +64,12 @@ public class OrderServiceImpl implements OrderService {
 	{
 		List<Order> list = orderRepository.findAll();
 
-		for(Order order : list)
+		Iterator<Order> it = list.iterator();
+		while (it.hasNext())
 		{
+			Order order = it.next();
 			if(order.getBlogger() != id)
-				list.remove(order);
+				it.remove();
 		}
 		return list;
 	}

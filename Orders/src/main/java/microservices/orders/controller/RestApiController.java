@@ -8,13 +8,10 @@ import microservices.orders.model.Advertiser;
 import microservices.orders.model.Order;
 import microservices.orders.service.AdvertiserService;
 import microservices.orders.service.OrderService;
-import microservices.orders.value_object.Money;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import microservices.orders.util.CustomErrorType;
 
@@ -50,25 +46,6 @@ public class RestApiController {
 
 	@RequestMapping(value = "/order/", method = RequestMethod.GET)
 	public ResponseEntity<List<Order>> listAllOrders() {
-		RestTemplate template = new RestTemplate();
-		//ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/video/", String.class);
-		//ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/blogger/", String.class);
-		/*JSONArray array;
-		try {
-			array = new JSONArray(resp.getBody());
-			Video video = new Video();
-			video.setCountOfDislikes(array.getJSONObject(0).getInt("countOfDislikes"));
-			video.setCountOfLikes(array.getJSONObject(0).getInt("countOfLikes"));
-			video.setCountOfViews(array.getJSONObject(0).getInt("countOfViews"));
-			video.setTag(array.getJSONObject(0).getString("tag"));
-			/*Blogger blogger = new Blogger();
-			blogger.setId(array.getJSONObject(0).getInt("id"));
-			blogger.setCountOfSubscribers(array.getJSONObject(0).getInt("countOfSubscribers"));
-			blogger.setStatus(array.getJSONObject(0).getString("status"));
-			blogger.setMinPrice(new Money(array.getJSONObject(0).getJSONObject("minPrice").getDouble("sum")));*/
-		/*}
-		catch (Throwable t){}*/
-
 		List<Order> orders = orderService.findAllOrders();
 		if (orders.isEmpty()) {
 			return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -119,7 +96,7 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/advertiser/", method = RequestMethod.POST)
-	public ResponseEntity<?> createAdvertiser(@RequestBody Advertiser advertiser, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createAdvertiser(@RequestBody Advertiser advertiser) {
 		logger.info("Creating Advertiser : {}", advertiser);
 
 		if (advertiserService.isAdvertiserExist(advertiser)) {
@@ -129,13 +106,11 @@ public class RestApiController {
 		}
 		advertiserService.saveAdvertiser(advertiser);
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/advertiser/{id}").buildAndExpand(advertiser.getId()).toUri());
-		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+		return new ResponseEntity<Advertiser>(advertiser, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/order/", method = RequestMethod.POST)
-	public ResponseEntity<?> createOrder(@RequestBody Order order, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createOrder(@RequestBody Order order) {
 		logger.info("Creating Order : {}", order);
 
 		if (orderService.isOrderExist(order)) {
@@ -156,8 +131,8 @@ public class RestApiController {
 			for(int i = 0; i < array.length(); i++)
 			{
 				Blogger blogger = new Blogger();
-				blogger.setMinPrice(new Money(array.getJSONObject(i).getJSONObject("minPrice").getDouble("sum")));
-				if(blogger.getMinPrice().getSum() > order.getSum().getSum())
+				blogger.setMinPrice(array.getJSONObject(i).getDouble("minPrice"));
+				if(blogger.getMinPrice() > order.getSum())
 					continue;
 				blogger.setId(array.getJSONObject(i).getInt("id"));
 				blogger.setCountOfSubscribers(array.getJSONObject(i).getInt("countOfSubscribers"));
@@ -177,18 +152,18 @@ public class RestApiController {
 				for (int j = 0; j < arr.length(); j++)
 				{
 					Video video = new Video();
-					video.setTag(array.getJSONObject(j).getString("tag"));
+					video.setTag(arr.getJSONObject(j).getString("tag"));
 					if(!video.getTag().equals(order.getTag()))
 						continue;
-					video.setCountOfDislikes(array.getJSONObject(j).getInt("countOfDislikes"));
-					video.setCountOfLikes(array.getJSONObject(j).getInt("countOfLikes"));
-					video.setCountOfViews(array.getJSONObject(j).getInt("countOfViews"));
+					video.setCountOfDislikes(arr.getJSONObject(j).getInt("countOfDislikes"));
+					video.setCountOfLikes(arr.getJSONObject(j).getInt("countOfLikes"));
+					video.setCountOfViews(arr.getJSONObject(j).getInt("countOfViews"));
 					sum += Math.abs(video.getCountOfLikes() - video.getCountOfDislikes()) + video.getCountOfViews() / 1000;
 				}
 				if(sum > maxSum)
 				{
 					maxSum = sum;
-					bloggerId = i;
+					bloggerId = blogger.getId();
 				}
 			}
 		}
@@ -201,9 +176,7 @@ public class RestApiController {
 		order.setBlogger(bloggerId);
 		orderService.saveOrder(order);
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/order/{id}").buildAndExpand(order.getId()).toUri());
-		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+		return new ResponseEntity<Order>(order, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/advertiser/{id}", method = RequestMethod.PUT)
@@ -250,8 +223,8 @@ public class RestApiController {
 			for(int i = 0; i < array.length(); i++)
 			{
 				Blogger blogger = new Blogger();
-				blogger.setMinPrice(new Money(array.getJSONObject(i).getJSONObject("minPrice").getDouble("sum")));
-				if(blogger.getMinPrice().getSum() > order.getSum().getSum())
+				blogger.setMinPrice(array.getJSONObject(i).getDouble("minPrice"));
+				if(blogger.getMinPrice() > order.getSum())
 					continue;
 				blogger.setId(array.getJSONObject(i).getInt("id"));
 				blogger.setCountOfSubscribers(array.getJSONObject(i).getInt("countOfSubscribers"));
@@ -271,18 +244,18 @@ public class RestApiController {
 				for (int j = 0; j < arr.length(); j++)
 				{
 					Video video = new Video();
-					video.setTag(array.getJSONObject(j).getString("tag"));
+					video.setTag(arr.getJSONObject(j).getString("tag"));
 					if(!video.getTag().equals(order.getTag()))
 						continue;
-					video.setCountOfDislikes(array.getJSONObject(j).getInt("countOfDislikes"));
-					video.setCountOfLikes(array.getJSONObject(j).getInt("countOfLikes"));
-					video.setCountOfViews(array.getJSONObject(j).getInt("countOfViews"));
+					video.setCountOfDislikes(arr.getJSONObject(j).getInt("countOfDislikes"));
+					video.setCountOfLikes(arr.getJSONObject(j).getInt("countOfLikes"));
+					video.setCountOfViews(arr.getJSONObject(j).getInt("countOfViews"));
 					sum += Math.abs(video.getCountOfLikes() - video.getCountOfDislikes()) + video.getCountOfViews() / 1000;
 				}
 				if(sum > maxSum)
 				{
 					maxSum = sum;
-					bloggerId = i;
+					bloggerId = blogger.getId();
 				}
 			}
 		}

@@ -1,5 +1,6 @@
 package microservices.bloggers.service;
 
+import java.util.Iterator;
 import java.util.List;
 
 import microservices.bloggers.model.Video;
@@ -59,10 +60,12 @@ public class VideoServiceImpl implements VideoService{
 	public List<Video> findVideosForBlogger(Integer blogger){
 		List<Video> list = videoRepository.findAll();
 
-		for(Video video : list)
+		Iterator<Video> it = list.iterator();
+		while (it.hasNext())
 		{
+			Video video = it.next();
 			if(video.getOwner() != blogger)
-				list.remove(video);
+				it.remove();
 		}
 
 		return list;

@@ -1,17 +1,17 @@
 package microservices.bloggers.controller;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import microservices.bloggers.model.Blogger;
 import microservices.bloggers.model.Video;
 import microservices.bloggers.service.BloggerService;
 import microservices.bloggers.service.VideoService;
-import microservices.bloggers.value_object.Money;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import microservices.bloggers.util.CustomErrorType;
 
@@ -126,7 +125,7 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/blogger/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateBlogger(@PathVariable("id") int id, @RequestBody JSONObject object) {
+	public ResponseEntity<?> updateBlogger(@PathVariable("id") int id, @RequestBody Blogger blogger) {
 		logger.info("Updating Blogger with id {}", id);
 
 		Blogger currentBlogger = bloggerService.findById(id);
@@ -137,19 +136,6 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		Blogger blogger = new Blogger();
-        try {
-            blogger.setLogin(object.getString("login"));
-            blogger.setAccount(new Money(object.getJSONObject("account").getDouble("sum")));
-            blogger.setMinPrice(new Money(object.getJSONObject("minPrice").getDouble("sum")));
-            blogger.setCountOfSubscribers(object.getInt("countOfSubscribers"));
-            blogger.setStatus(object.getString("status"));
-        }
-        catch (Throwable t)
-        {
-            return new ResponseEntity(new CustomErrorType("Unable to update. JSONObject opening problem."),
-                    HttpStatus.NOT_FOUND);
-        }
 		currentBlogger.setLogin(blogger.getLogin());
 		currentBlogger.setAccount(blogger.getAccount());
 		currentBlogger.setMinPrice(blogger.getMinPrice());

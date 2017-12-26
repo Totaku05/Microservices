@@ -1,9 +1,10 @@
 package microservices.orders.bloggers;
 
-import java.io.Serializable;
+import java.sql.Time;
+import java.util.Date;
 import java.util.Objects;
 
-public class Video{
+public class Video {
     private String tag;
 
     private Integer countOfLikes;
