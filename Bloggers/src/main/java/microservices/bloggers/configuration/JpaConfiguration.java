@@ -39,11 +39,6 @@ public class JpaConfiguration {
 	@Value("${datasource.microservice_app.maxPoolSize:10}")
 	private int maxPoolSize;
 
-	/*
-	 * Populate SpringBoot DataSourceProperties object directly from application.yml 
-	 * based on prefix.Thanks to .yml, Hierachical data is mapped out of the box with matching-name
-	 * properties of DataSourceProperties object].
-	 */
 	@Bean
 	@Primary
 	@ConfigurationProperties(prefix = "datasource.microservice_app")
@@ -51,9 +46,6 @@ public class JpaConfiguration {
 		return new DataSourceProperties();
 	}
 
-	/*
-	 * Configure HikariCP pooled DataSource.
-	 */
 	@Bean
 	public DataSource dataSource() {
 		DataSourceProperties dataSourceProperties = dataSourceProperties();
@@ -69,9 +61,6 @@ public class JpaConfiguration {
 			return dataSource;
 	}
 
-	/*
-	 * Entity Manager Factory setup.
-	 */
 	@Bean
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws NamingException {
 		LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
@@ -82,18 +71,12 @@ public class JpaConfiguration {
 		return factoryBean;
 	}
 
-	/*
-	 * Provider specific adapter.
-	 */
 	@Bean
 	public JpaVendorAdapter jpaVendorAdapter() {
 		HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
 		return hibernateJpaVendorAdapter;
 	}
 
-	/*
-	 * Here you can specify any provider specific properties.
-	 */
 	private Properties jpaProperties() {
 		Properties properties = new Properties();
 		properties.put("hibernate.dialect", environment.getRequiredProperty("datasource.microservice_app.hibernate.dialect"));

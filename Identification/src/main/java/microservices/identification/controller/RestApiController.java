@@ -43,6 +43,8 @@ public class RestApiController {
 	@Autowired
 	ContactInfoService contactInfoService;
 
+	//int counter = 11;
+	
 	@RequestMapping(value = "/user/", method = RequestMethod.GET)
 	public ResponseEntity<List<User>> listAllUsers() {
 		List<User> users = userService.findAllUsers();
@@ -264,6 +266,7 @@ public class RestApiController {
 	public ResponseEntity<?> createUser(@RequestBody User user) {
 		logger.info("Creating User : {}", user);
 
+		//user.setId(counter++);
 		if (userService.isUserExist(user)) {
 			logger.error("Unable to create. A User with name {} already exist", user.getContactInfo().getFirstName() + " " + user.getContactInfo().getSecondName());
 			return new ResponseEntity(new CustomErrorType("Unable to create. A User with name " +
@@ -444,7 +447,9 @@ public class RestApiController {
 		{
 			Blogger blogger = template.getForObject("http://localhost:9090/bloggers/blogger/{id}", Blogger.class, currentVideo.getOwner());
 			Order order = template.getForObject("http://localhost:8585/orders/order/{id}", Order.class, currentVideo.getCompleted_order());
-			blogger.setAccount(blogger.getAccount() + order.getSum());
+			blogger.setAccount(blogger.getAccount() + order.ge````````````````````````tSum());
+			order.setState("Done");
+			template.put("http://localhost:8585/orders/order/{id}", order, order.getId());
 			template.put("http://localhost:9090/bloggers/blogger/{id}", blogger, blogger.getId());
 		}
 		return new ResponseEntity<Video>(currentVideo, HttpStatus.OK);

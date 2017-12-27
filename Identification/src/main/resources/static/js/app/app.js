@@ -1,8 +1,8 @@
-var app = angular.module('crudApp',['ui.router','ngStorage']);
+var app = angular.module('advertisingApp',['ui.router','ngStorage']);
 
 app.constant('urls', {
-    BASE: 'http://localhost:8080/identification',
-    USER_SERVICE_API : 'http://localhost:8080/identification/user/'
+    BASE: 'http://localhost:8081/identification',
+    USER_SERVICE_API : 'http://localhost:8081/identification/user/'
 });
 
 app.config(['$stateProvider', '$urlRouterProvider',

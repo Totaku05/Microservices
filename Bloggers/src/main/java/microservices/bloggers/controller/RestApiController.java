@@ -186,7 +186,7 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 		bloggerService.deleteBloggerById(id);
-		videoService.deleteAllVideos(id);
+		//videoService.deleteAllVideos(id);
 		return new ResponseEntity<Blogger>(HttpStatus.NO_CONTENT);
 	}
 
@@ -200,7 +200,11 @@ public class RestApiController {
 			return new ResponseEntity(new CustomErrorType("Unable to delete. Video with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
-		videoService.deleteVideoById(id);
+		if(video.getCompleted_order() == null)
+			videoService.deleteVideoById(id);
+		else
+			return new ResponseEntity(new CustomErrorType("Unable to delete. Video with id " + id + " has completed order."),
+					HttpStatus.BAD_REQUEST);
 		return new ResponseEntity<Video>(HttpStatus.NO_CONTENT);
 	}
 

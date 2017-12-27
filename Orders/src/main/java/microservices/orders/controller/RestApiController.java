@@ -211,72 +211,73 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		RestTemplate template = new RestTemplate();
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/blogger/", String.class);
-		JSONArray array;
+		if(currentOrder.getState().equals("InProgress")) {
+			RestTemplate template = new RestTemplate();
+			ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/bloggers/blogger/", String.class);
+			JSONArray array;
 
-		int bloggerId = -1;
+			int bloggerId = -1;
 
-		try {
-			array = new JSONArray(resp.getBody());
-			double maxSum = -100;
-			for(int i = 0; i < array.length(); i++)
-			{
-				Blogger blogger = new Blogger();
-				blogger.setMinPrice(array.getJSONObject(i).getDouble("minPrice"));
-				if(blogger.getMinPrice() > order.getSum())
-					continue;
-				blogger.setId(array.getJSONObject(i).getInt("id"));
-				blogger.setCountOfSubscribers(array.getJSONObject(i).getInt("countOfSubscribers"));
-				blogger.setStatus(array.getJSONObject(i).getString("status"));
-				ResponseEntity<String> response = template.getForEntity("http://localhost:9090/bloggers/video_blogger/{id}", String.class, blogger.getId());
-				JSONArray arr = new JSONArray(response.getBody());
-				double coeff = 1;
-				if(blogger.getStatus().equals("Bronze"))
-					coeff = 1.1;
-				if(blogger.getStatus().equals("Silver"))
-					coeff = 1.2;
-				if(blogger.getStatus().equals("Gold"))
-					coeff = 1.3;
-				if(blogger.getStatus().equals("Diamond"))
-					coeff = 1.4;
-				double sum = blogger.getCountOfSubscribers() * coeff;
-				for (int j = 0; j < arr.length(); j++)
-				{
-					Video video = new Video();
-					video.setTag(arr.getJSONObject(j).getString("tag"));
-					if(!video.getTag().equals(order.getTag()))
+			try {
+				array = new JSONArray(resp.getBody());
+				double maxSum = -100;
+				for (int i = 0; i < array.length(); i++) {
+					Blogger blogger = new Blogger();
+					blogger.setMinPrice(array.getJSONObject(i).getDouble("minPrice"));
+					if (blogger.getMinPrice() > order.getSum())
 						continue;
-					video.setCountOfDislikes(arr.getJSONObject(j).getInt("countOfDislikes"));
-					video.setCountOfLikes(arr.getJSONObject(j).getInt("countOfLikes"));
-					video.setCountOfViews(arr.getJSONObject(j).getInt("countOfViews"));
-					sum += Math.abs(video.getCountOfLikes() - video.getCountOfDislikes()) + video.getCountOfViews() / 1000;
+					blogger.setId(array.getJSONObject(i).getInt("id"));
+					blogger.setCountOfSubscribers(array.getJSONObject(i).getInt("countOfSubscribers"));
+					blogger.setStatus(array.getJSONObject(i).getString("status"));
+					ResponseEntity<String> response = template.getForEntity("http://localhost:9090/bloggers/video_blogger/{id}", String.class, blogger.getId());
+					JSONArray arr = new JSONArray(response.getBody());
+					double coeff = 1;
+					if (blogger.getStatus().equals("Bronze"))
+						coeff = 1.1;
+					if (blogger.getStatus().equals("Silver"))
+						coeff = 1.2;
+					if (blogger.getStatus().equals("Gold"))
+						coeff = 1.3;
+					if (blogger.getStatus().equals("Diamond"))
+						coeff = 1.4;
+					double sum = blogger.getCountOfSubscribers() * coeff;
+					for (int j = 0; j < arr.length(); j++) {
+						Video video = new Video();
+						video.setTag(arr.getJSONObject(j).getString("tag"));
+						if (!video.getTag().equals(order.getTag()))
+							continue;
+						video.setCountOfDislikes(arr.getJSONObject(j).getInt("countOfDislikes"));
+						video.setCountOfLikes(arr.getJSONObject(j).getInt("countOfLikes"));
+						video.setCountOfViews(arr.getJSONObject(j).getInt("countOfViews"));
+						sum += Math.abs(video.getCountOfLikes() - video.getCountOfDislikes()) + video.getCountOfViews() / 1000;
+					}
+					if (sum > maxSum) {
+						maxSum = sum;
+						bloggerId = blogger.getId();
+					}
 				}
-				if(sum > maxSum)
-				{
-					maxSum = sum;
-					bloggerId = blogger.getId();
-				}
+			} catch (Throwable t) {
+				return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
 			}
+			if (bloggerId == -1)
+				return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
+
+			currentOrder.setName(order.getName());
+			currentOrder.setDescription(order.getDescription());
+			currentOrder.setStartDate(order.getStartDate());
+			currentOrder.setEndDate(order.getEndDate());
+			currentOrder.setLastUpdateDate(new java.util.Date());
+			currentOrder.setOwner(order.getOwner());
+			currentOrder.setState(order.getState());
+			currentOrder.setSum(order.getSum());
+			currentOrder.setTag(order.getTag());
+			currentOrder.setBlogger(bloggerId);
 		}
-		catch (Throwable t)
+		else
 		{
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
+			return new ResponseEntity(new CustomErrorType("Unable to update. Order with id " + id + " isn't in progress."),
+					HttpStatus.BAD_REQUEST);
 		}
-		if(bloggerId == -1)
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
-
-		currentOrder.setName(order.getName());
-		currentOrder.setDescription(order.getDescription());
-		currentOrder.setStartDate(order.getStartDate());
-		currentOrder.setEndDate(order.getEndDate());
-		currentOrder.setLastUpdateDate(new java.util.Date());
-		currentOrder.setOwner(order.getOwner());
-		currentOrder.setState(order.getState());
-		currentOrder.setSum(order.getSum());
-		currentOrder.setTag(order.getTag());
-		currentOrder.setBlogger(bloggerId);
-
 		orderService.updateOrder(currentOrder);
 		return new ResponseEntity<Order>(currentOrder, HttpStatus.OK);
 	}
@@ -292,7 +293,7 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 		advertiserService.deleteAdvertiserById(id);
-		orderService.deleteAllOrders(id);
+		//orderService.deleteAllOrders(id);
 		return new ResponseEntity<Advertiser>(HttpStatus.NO_CONTENT);
 	}
 
@@ -306,7 +307,11 @@ public class RestApiController {
 			return new ResponseEntity(new CustomErrorType("Unable to delete. Order with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
-		orderService.deleteOrderById(id);
+		if(!order.getState().equals("Done"))
+			orderService.deleteOrderById(id);
+		else
+			return new ResponseEntity(new CustomErrorType("Unable to delete. Order with id " + id + " is done."),
+					HttpStatus.BAD_REQUEST);
 		return new ResponseEntity<Order>(HttpStatus.NO_CONTENT);
 	}
 
