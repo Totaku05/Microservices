@@ -1,0 +1,5 @@
+---
+server:
+  port: 9595
+  contextPath: /gateway
+

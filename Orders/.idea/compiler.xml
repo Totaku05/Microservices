@@ -6,19 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Blogger" />
-        <module name="Identification" />
-        <module name="Order" />
         <module name="Orders" />
-        <module name="SpringBootCRUDApplicationExample" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="Blogger" target="1.8" />
-      <module name="Identification" target="1.8" />
-      <module name="Order" target="1.8" />
       <module name="Orders" target="1.8" />
-      <module name="SpringBootCRUDApplicationExample" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
