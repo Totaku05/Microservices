@@ -18,4 +18,9 @@ public interface AdvertiserService {
 	List<Advertiser> findAllAdvertisers();
 
 	boolean isAdvertiserExist(Advertiser advertiser);
+
+	void newAdvertiser(Integer id, String login, Integer card_number);
+
+	Integer updateAccount(Integer id, Double sum);
+
 }

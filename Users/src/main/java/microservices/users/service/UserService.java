@@ -2,6 +2,7 @@ package microservices.users.service;
 
 
 import microservices.users.model.User;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -18,4 +19,6 @@ public interface UserService {
 	List<User> findAllUsers();
 
 	boolean isUserExist(User user);
+
+	ResponseEntity<?> identify(String login, String password);
 }

@@ -41,4 +41,27 @@ public class AdvertiserServiceImpl implements AdvertiserService {
 		return findById(advertiser.getId()) != null;
 	}
 
+	public void newAdvertiser(Integer id, String login, Integer card_number)
+    {
+        Advertiser advertiser = new Advertiser();
+        advertiser.setId(id);
+        advertiser.setAccount(0.0);
+        advertiser.setLogin(login);
+        advertiser.setCard_number(card_number);
+        saveAdvertiser(advertiser);
+    }
+
+    public Integer updateAccount(Integer id, Double sum)
+    {
+        Advertiser advertiser = findById(id);
+
+        if(advertiser.getAccount() + sum < 0)
+            return -1;
+
+        advertiser.setAccount(advertiser.getAccount() + sum);
+        updateAdvertiser(advertiser);
+
+        return advertiser.getCard_number();
+    }
+
 }

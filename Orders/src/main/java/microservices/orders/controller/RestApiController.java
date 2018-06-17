@@ -80,8 +80,13 @@ public class RestApiController {
 		}
 
 		RestTemplate template = new RestTemplate();
-		template.put("http://localhost:8080/users/user_account/{id}/{sum}", order.getOwner(),-order.getSum());
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:8080/users/blogger/", String.class);
+		Map<String, String> param = new HashMap<String, String>();
+		param.put("id", Integer.toString(order.getOwner()));
+		param.put("sum", Double.toString(-order.getSum()));
+        param.put("external", Boolean.toString(false));
+
+		template.put("http://localhost:9898/users/user_account/{id}/{sum}/{external}", null, param);
+		ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/blogger/", String.class);
 		JSONArray array;
 
 		int bloggerId = -1;
@@ -130,10 +135,10 @@ public class RestApiController {
 		}
 		catch (Throwable t)
 		{
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
+			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		if(bloggerId == -1)
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.TOO_MANY_REQUESTS);
+			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.INTERNAL_SERVER_ERROR);
 		order.setBlogger(bloggerId);
 		orderService.saveOrder(order);
 
@@ -158,7 +163,7 @@ public class RestApiController {
 		}
 
 		RestTemplate template = new RestTemplate();
-		template.put("http://localhost:8080/users/user_account/{id}/{sum}", currentOrder.getBlogger(), currentOrder.getSum());
+		//template.put("http://localhost:9898/users/user_account/{id}/{sum}", currentOrder.getBlogger(), currentOrder.getSum());
 		currentOrder.setState(order.getState());
 		orderService.updateOrder(currentOrder);
 		if(order.getState().equals("Done"))

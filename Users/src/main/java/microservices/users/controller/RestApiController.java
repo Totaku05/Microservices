@@ -1,17 +1,11 @@
 package microservices.users.controller;
 
-import java.sql.Time;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 
+import javafx.util.Pair;
 import microservices.users.model.*;
 import microservices.users.service.ContactInfoService;
 import microservices.users.service.*;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +51,22 @@ public class RestApiController {
 		return new ResponseEntity<List<User>>(users, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/blogger/", method = RequestMethod.GET)
+	public ResponseEntity<List<Blogger>> listAllBloggers() {
+		List<Blogger> bloggers = bloggerService.findAllBloggers();
+		if (bloggers.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+
+		return new ResponseEntity<List<Blogger>>(bloggers, HttpStatus.OK);
+	}
+
+    @RequestMapping(value = "/statuses/", method = RequestMethod.GET)
+    public ResponseEntity<List<Pair<String, Double>>> listAllStatuses() {
+        List<Pair<String, Double>> statuses = bloggerService.getStatuses();
+        return new ResponseEntity<List<Pair<String, Double>>>(statuses, HttpStatus.OK);
+    }
+
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getUser(@PathVariable("id") int id) {
 		logger.info("Fetching User with id {}", id);
@@ -97,26 +107,14 @@ public class RestApiController {
 	@RequestMapping(value = "/user/{login}/{password}", method = RequestMethod.GET)
 	public ResponseEntity<?> Identify(@PathVariable("login") String login, @PathVariable("password") String password) {
 		logger.info("Fetching User with login {}", login);
-		List<User> users = userService.findAllUsers();
-		if (users.isEmpty()) {
-			return new ResponseEntity(HttpStatus.NO_CONTENT);
-		}
-		for(User user : users)
-			if(user.getLogin().equals(login))
-			{
-				if(user.getPassword().equals(password))
-					return new ResponseEntity<User>(user, HttpStatus.OK);
-				else return new ResponseEntity(new CustomErrorType("Bad password"), HttpStatus.BAD_REQUEST);
-			}
-		return new ResponseEntity(new CustomErrorType("User with login " + login
-				+ " not found"), HttpStatus.NOT_FOUND);
+
+		return userService.identify(login, password);
 	}
 
 	@RequestMapping(value = "/user/{card_number}", method = RequestMethod.POST)
 	public ResponseEntity<?> createUser(@RequestBody User user, @PathVariable("card_number") Integer card_number) {
 		logger.info("Creating User : {}", user);
 
-		//user.setId(counter++);
 		if (userService.isUserExist(user)) {
 			logger.error("Unable to create. A User with name {} already exist", user.getContactInfo().getFirstName() + " " + user.getContactInfo().getSecondName());
 			return new ResponseEntity(new CustomErrorType("Unable to create. A User with name " +
@@ -124,28 +122,10 @@ public class RestApiController {
 		}
 		userService.saveUser(user);
 		contactInfoService.saveInfo(user.getContactInfo());
-		RestTemplate template = new RestTemplate();
 		if(user.getRole().equals("Advertiser"))
-		{
-			Advertiser advertiser = new Advertiser();
-			advertiser.setId(user.getId());
-			advertiser.setAccount(0.0);
-			advertiser.setLogin(user.getLogin());
-			advertiser.setCard_number(card_number);
-			advertiserService.saveAdvertiser(advertiser);
-		}
+			advertiserService.newAdvertiser(user.getId(), user.getLogin(), card_number);
 		else
-		{
-			Blogger blogger = new Blogger();
-			blogger.setAccount(0.0);
-			blogger.setMinPrice(0.0);
-			blogger.setId(user.getId());
-			blogger.setStatus("Common");
-			blogger.setLogin(user.getLogin());
-			blogger.setCountOfSubscribers(0);
-			blogger.setCard_number(card_number);
-			bloggerService.saveBlogger(blogger);
-		}
+			bloggerService.newBlogger(user.getId(), user.getLogin(), card_number);
 		return new ResponseEntity<User>(user, HttpStatus.CREATED);
 	}
 
@@ -179,7 +159,6 @@ public class RestApiController {
 		if(currentUser.getRole().equals("Advertiser"))
 		{
 			Advertiser currentAdvertiser = advertiserService.findById(id);
-			currentAdvertiser.setId(currentUser.getId());
 			currentAdvertiser.setLogin(currentUser.getLogin());
 			currentAdvertiser.setCard_number(advertiser.getCard_number());
 			advertiserService.updateAdvertiser(currentAdvertiser);
@@ -187,7 +166,6 @@ public class RestApiController {
 		if(currentUser.getRole().equals("Blogger"))
 		{
 			Blogger currentBlogger = bloggerService.findById(id);
-			currentBlogger.setId(currentUser.getId());
 			currentBlogger.setLogin(currentUser.getLogin());
 			currentBlogger.setStatus(blogger.getStatus());
 			currentBlogger.setCountOfSubscribers(blogger.getCountOfSubscribers());
@@ -199,49 +177,34 @@ public class RestApiController {
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/user_account/{id}/{sum}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateAccount(@PathVariable("id") int id, @PathVariable("sum") double sum) {
+	@RequestMapping(value = "/user_account/{id}/{sum}/{external}", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateAccount(@PathVariable("id") int id, @PathVariable("sum") double sum, @PathVariable("external") boolean external) {
 		logger.info("Updating Account for User with id {}", id);
 
 		User currentUser = userService.findById(id);
 		int card_number = 0;
+		double account = 0;
 
 		if (currentUser == null) {
 			logger.error("Unable to update. User with id {} not found.", id);
-			return new ResponseEntity(new CustomErrorType("Unable to upate. User with id " + id + " not found."),
+			return new ResponseEntity(new CustomErrorType("Unable to update. User with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
 
 		if(currentUser.getRole().equals("Advertiser"))
-		{
-			Advertiser currentAdvertiser = advertiserService.findById(id);
-			card_number = currentAdvertiser.getCard_number();
-			if(currentAdvertiser.getAccount() + sum < 0)
-			{
-				logger.error("Unable to update. Bad sum of money.", id);
-				return new ResponseEntity(new CustomErrorType("Unable to upate. Bad sum of money."),
-						HttpStatus.BAD_REQUEST);
-			}
+            card_number = advertiserService.updateAccount(id, sum);
+		else
+            card_number = bloggerService.updateAccount(id, sum);
 
-			currentAdvertiser.setAccount(currentAdvertiser.getAccount() + sum);
-			advertiserService.updateAdvertiser(currentAdvertiser);
-		}
-		if(currentUser.getRole().equals("Blogger"))
+		if(card_number < 0)
 		{
-			Blogger currentBlogger = bloggerService.findById(id);
-			card_number = currentBlogger.getCard_number();
-			if(currentBlogger.getAccount() + sum < 0)
-			{
-				logger.error("Unable to update. Bad sum of money.", id);
-				return new ResponseEntity(new CustomErrorType("Unable to upate. Bad sum of money."),
-						HttpStatus.BAD_REQUEST);
-			}
-
-			currentBlogger.setAccount(currentBlogger.getAccount() + sum);
-			bloggerService.updateBlogger(currentBlogger);
+		    logger.error("Unable to update. Bad sum of money.");
+		    return new ResponseEntity(new CustomErrorType("Unable to update. Bad sum of money."),
+                    HttpStatus.BAD_REQUEST);
 		}
 
-		if(sum > 0) {
+		//user wants to withdraw or enter money into the system
+		if(external)
 			try {
 				RestTemplate template = new RestTemplate();
 				template.put("http://localhost:9696/payment/withdraw_money/{card_number}/{sum}", card_number, sum);
@@ -253,9 +216,19 @@ public class RestApiController {
 					return new ResponseEntity(new CustomErrorType("Account updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			}
-		}
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
 	}
+
+    @RequestMapping(value = "/status/{id}/{status}", method = RequestMethod.PUT)
+    public ResponseEntity<?> updateBloggerStatus(@PathVariable("id") int id, @PathVariable("status") String status) {
+        if(!bloggerService.updateBloggerStatus(id, status))
+        {
+            logger.error("Unable to update. You haven't such sum of money.");
+            return new ResponseEntity(new CustomErrorType("Unable to update. You haven't such sum of money."),
+                    HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deleteUser(@PathVariable("id") int id) {
@@ -267,7 +240,7 @@ public class RestApiController {
 			return new ResponseEntity(new CustomErrorType("Unable to delete. User with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
-		RestTemplate template = new RestTemplate();
+
 		if(user.getRole().equals("Blogger"))
 			bloggerService.deleteBloggerById(id);
 		if(user.getRole().equals("Advertiser"))

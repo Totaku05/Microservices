@@ -3,10 +3,9 @@ package microservices.gateway.controller;
 import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+
+import javafx.util.*;
 
 import microservices.gateway.videos.Video;
 import microservices.gateway.users.*;
@@ -124,7 +123,7 @@ public class RestApiController {
 
 		RestTemplate template = new RestTemplate();
 		List<User> users = new LinkedList<User>();
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:8080/users/user/", String.class);
+		/*/ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/user/", String.class);
 		try {
 			JSONArray array = new JSONArray(resp.getBody());
 			for(int i = 0; i < array.length(); i++)
@@ -138,24 +137,56 @@ public class RestApiController {
 		catch (Throwable t)
 		{
 			return new ResponseEntity(new CustomErrorType("Fetching all Users failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		}*/
+
+		Order order = new Order();
+		order.setId(6);
+		order.setName("name");
+		order.setDescription("description");
+		order.setTag("Food");
+		order.setSum(100);
+
+		order.setStartDate(new Date());
+		order.setLastUpdateDate(new Date());
+
+		order.setState("InProgress");
+		order.setOwner(4);
+
+		//order.setState("InReview");
+		//template.put("http://localhost:8585/orders/status/{id}", order, order.getId());
+		Order o = template.postForObject("http://localhost:8585/orders/order/", order, Order.class);
+
+		/*Video video = new Video();
+		video.setOwner(6);
+		video.setCountOfLikes(500);
+		video.setName("video");
+		video.setCountOfDislikes(1000);
+		video.setCountOfViews(2000);
+		video.setDescription("description");
+		video.setDuration(new Time(0));
+		video.setTag("Food");
+		video.setDateOfCreation(new Date());
+		video.setId(150);
+		Video v = template.postForObject("http://localhost:9090/videos/video/", video, Video.class);*/
+
+
 
 		return new ResponseEntity<List<User>>(users, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/status/", method = RequestMethod.GET)
-	public ResponseEntity<List<User>> listAllStatuses() {
+	public ResponseEntity<List<Pair<String, Double>>> listAllStatuses() {
 		logger.info("Fetching all Statuses");
 
 		RestTemplate template = new RestTemplate();
 		List<Pair<String, Double>> statuses = new LinkedList<Pair<String, Double>>();
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:8080/users/status/", String.class);
+		ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/statuses/", String.class);
 		try {
 			JSONArray array = new JSONArray(resp.getBody());
 			for(int i = 0; i < array.length(); i++)
 			{
 				JSONObject object = array.getJSONObject(i);
-				Pair<String, Double> pair = new ImmutablePair<String, Double>(object.getString("status"), object.getDouble("sum"));
+				Pair<String, Double> pair = new Pair<String, Double>(object.getString("key"), object.getDouble("value"));
 				statuses.add(pair);
 			}
 		}
@@ -164,7 +195,7 @@ public class RestApiController {
 			return new ResponseEntity(new CustomErrorType("Fetching all Users failed"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+		return new ResponseEntity<List<Pair<String, Double>>>(statuses, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/video_blogger/{id}", method = RequestMethod.GET)
@@ -258,7 +289,7 @@ public class RestApiController {
 		logger.info("Fetching User with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		User user = template.getForObject("http://localhost:8080/users/user/{id}", User.class, id);
+		User user = template.getForObject("http://localhost:9898/users/user/{id}", User.class, id);
 
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
@@ -268,7 +299,7 @@ public class RestApiController {
 		logger.info("Fetching Advertiser with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		Advertiser advertiser = template.getForObject("http://localhost:8080/users/advertiser/{id}", Advertiser.class, id);
+		Advertiser advertiser = template.getForObject("http://localhost:9898/users/advertiser/{id}", Advertiser.class, id);
 
 		return new ResponseEntity<Advertiser>(advertiser, HttpStatus.OK);
 	}
@@ -278,7 +309,7 @@ public class RestApiController {
 		logger.info("Fetching Blogger with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		Blogger blogger = template.getForObject("http://localhost:8080/users/blogger/{id}", Blogger.class, id);
+		Blogger blogger = template.getForObject("http://localhost:9898/users/blogger/{id}", Blogger.class, id);
 
 		return new ResponseEntity<Blogger>(blogger, HttpStatus.OK);
 	}
@@ -290,7 +321,7 @@ public class RestApiController {
 		User user = null;
 		try {
 			RestTemplate template = new RestTemplate();
-			user = template.getForObject("http://localhost:8080/users/user/{login}/{password}", User.class, login, password);
+			user = template.getForObject("http://localhost:9898/users/user/{login}/{password}", User.class, login, password);
 		}
 		catch (HttpClientErrorException e)
 		{
@@ -311,7 +342,7 @@ public class RestApiController {
 		logger.info("Creating User : {}", user);
 
 		RestTemplate template = new RestTemplate();
-		User u = template.postForObject("http://localhost:8080/users/user/", user, User.class);
+		User u = template.postForObject("http://localhost:9898/users/user/", user, User.class);
 		return new ResponseEntity<User>(u, HttpStatus.CREATED);
 	}
 
@@ -334,9 +365,9 @@ public class RestApiController {
 		Blogger blogger = null;
 		try {
 			Order o = template.postForObject("http://localhost:8585/orders/order/", order, Order.class);
-			template.put("http://localhost:8080/users/user_account/{id}/{sum}", order.getOwner(), -order.getSum());
-			blogger = template.getForObject("http://localhost:8080/users/blogger/{id}", Blogger.class, order.getBlogger());
-			User user = template.getForObject("http://localhost:8080/users/user/{id}", User.class, order.getBlogger());
+			template.put("http://localhost:9898/users/user_account/{id}/{sum}", order.getOwner(), -order.getSum());
+			blogger = template.getForObject("http://localhost:9898/users/blogger/{id}", Blogger.class, order.getBlogger());
+			User user = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getBlogger());
 			String message = "You have new order.";
             template.put("http://localhost:9797/notification/send_message/{email}/{message}", user.getContactInfo().getEmail(), message);
 		}
@@ -362,7 +393,7 @@ public class RestApiController {
 		User currentUser = null;
 		try {
 			RestTemplate template = new RestTemplate();
-			currentUser = template.getForObject("http://localhost:8080/user/user/{id}", User.class, id);
+			currentUser = template.getForObject("http://localhost:9898/users/user/{id}", User.class, id);
 
 			if (currentUser == null) {
 				logger.error("Unable to update. User with id {} not found.", id);
@@ -375,24 +406,24 @@ public class RestApiController {
 			currentUser.setRole(user.getRole());
 			currentUser.setContactInfo(user.getContactInfo());
 
-			template.put("http://localhost:8080/users/user/{id}", currentUser, currentUser.getId());
+			template.put("http://localhost:9898/users/user/{id}", currentUser, currentUser.getId());
 
 			if (currentUser.getRole().equals("Advertiser")) {
-				Advertiser currentAdvertiser = template.getForObject("http://localhost:8080/users/advertiser/{id}", Advertiser.class, id);
+				Advertiser currentAdvertiser = template.getForObject("http://localhost:9898/users/advertiser/{id}", Advertiser.class, id);
 				currentAdvertiser.setId(currentUser.getId());
 				currentAdvertiser.setLogin(currentUser.getLogin());
 				currentAdvertiser.setCard_number(advertiser.getCard_number());
-				template.put("http://localhost:8080/users/advertiser/{id}", currentAdvertiser, currentAdvertiser.getId());
+				template.put("http://localhost:9898/users/advertiser/{id}", currentAdvertiser, currentAdvertiser.getId());
 			}
 			if (currentUser.getRole().equals("Blogger")) {
-				Blogger currentBlogger = template.getForObject("http://localhost:8080/users/blogger/{id}", Blogger.class, id);
+				Blogger currentBlogger = template.getForObject("http://localhost:9898/users/blogger/{id}", Blogger.class, id);
 				currentBlogger.setId(currentUser.getId());
 				currentBlogger.setLogin(currentUser.getLogin());
 				currentBlogger.setStatus(blogger.getStatus());
 				currentBlogger.setCountOfSubscribers(blogger.getCountOfSubscribers());
 				currentBlogger.setMinPrice(blogger.getMinPrice());
 				currentBlogger.setCard_number(blogger.getCard_number());
-				template.put("http://localhost:8080/users/blogger/{id}", currentBlogger, currentBlogger.getId());
+				template.put("http://localhost:9898/users/blogger/{id}", currentBlogger, currentBlogger.getId());
 			}
 		}
 		catch (HttpClientErrorException e)
@@ -409,13 +440,40 @@ public class RestApiController {
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/status/{id}/{status}", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateBloggerStatus(@PathVariable("id") int id, @PathVariable("status") String status) {
+		logger.info("Updating User with id {}", id);
+
+		User currentUser = null;
+		try {
+			RestTemplate template = new RestTemplate();
+			Map<String, String> param = new HashMap<String, String>();
+			param.put("id", Integer.toString(id));
+			param.put("status", status);
+
+			template.put("http://localhost:9898/users/status/{id}/{status}", null, param);
+		}
+		catch (HttpClientErrorException e)
+		{
+			try {
+				JSONObject object = new JSONObject(e.getResponseBodyAsString());
+				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
+			}
+			catch (Throwable t)
+			{
+				return new ResponseEntity(new CustomErrorType("User updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity(HttpStatus.OK);
+	}
+
 	@RequestMapping(value = "/user_account/{id}/{sum}", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateAccount(@PathVariable("id") int id, @PathVariable("sum") double sum) {
 		logger.info("Updating Account for User with id {}", id);
 
 		RestTemplate template = new RestTemplate();
 		try {
-			template.put("http://localhost:8080/users/user_account/{id}/{sum}", id, sum);
+			template.put("http://localhost:9898/users/user_account/{id}/{sum}", id, sum);
 		}
 		catch (HttpClientErrorException e)
 		{
@@ -487,8 +545,8 @@ public class RestApiController {
 		}
 		if(currentOrder.getState().equals("Done"))
 		{
-            User blogger = template.getForObject("http://localhost:8080/users/user/{id}", User.class, order.getBlogger());
-            User advertiser = template.getForObject("http://localhost:8080/users/user/{id}", User.class, order.getOwner());
+            User blogger = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getBlogger());
+            User advertiser = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getOwner());
             String message = "Status of your order is changed.";
             template.put("http://localhost:9797/notification/send_message/{email}/{message}", blogger.getContactInfo().getEmail(), message);
             template.put("http://localhost:9797/notification/send_message/{email}/{message}", advertiser.getContactInfo().getEmail(), message);
@@ -502,7 +560,7 @@ public class RestApiController {
 
 		RestTemplate template = new RestTemplate();
 		try {
-			template.delete("http://localhost:8080/users/user/{id}", id);
+			template.delete("http://localhost:9898/users/user/{id}", id);
 		}
 		catch (HttpClientErrorException e)
 		{
