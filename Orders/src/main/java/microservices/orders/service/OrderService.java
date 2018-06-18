@@ -2,6 +2,7 @@ package microservices.orders.service;
 
 
 import microservices.orders.model.Order;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -24,4 +25,7 @@ public interface OrderService {
 	List<Order> findOrdersForBlogger(Integer id);
 
 	boolean isOrderExist(Order order);
+
+	ResponseEntity<?> createOrder(Order order);
+
 }

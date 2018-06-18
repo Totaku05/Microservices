@@ -79,70 +79,7 @@ public class RestApiController {
 					order.getId() + " already exist."),HttpStatus.CONFLICT);
 		}
 
-		RestTemplate template = new RestTemplate();
-		Map<String, String> param = new HashMap<String, String>();
-		param.put("id", Integer.toString(order.getOwner()));
-		param.put("sum", Double.toString(-order.getSum()));
-        param.put("external", Boolean.toString(false));
-
-		template.put("http://localhost:9898/users/user_account/{id}/{sum}/{external}", null, param);
-		ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/blogger/", String.class);
-		JSONArray array;
-
-		int bloggerId = -1;
-
-		try {
-			array = new JSONArray(resp.getBody());
-			double maxSum = -100;
-			for(int i = 0; i < array.length(); i++)
-			{
-				Blogger blogger = new Blogger();
-				blogger.setMinPrice(array.getJSONObject(i).getDouble("minPrice"));
-				if(blogger.getMinPrice() > order.getSum())
-					continue;
-				blogger.setId(array.getJSONObject(i).getInt("id"));
-				blogger.setCountOfSubscribers(array.getJSONObject(i).getInt("countOfSubscribers"));
-				blogger.setStatus(array.getJSONObject(i).getString("status"));
-				ResponseEntity<String> response = template.getForEntity("http://localhost:9090/videos/video_blogger/{id}", String.class, blogger.getId());
-				JSONArray arr = new JSONArray(response.getBody());
-				double coeff = 1;
-				if(blogger.getStatus().equals("Bronze"))
-					coeff = 1.1;
-				if(blogger.getStatus().equals("Silver"))
-					coeff = 1.2;
-				if(blogger.getStatus().equals("Gold"))
-					coeff = 1.3;
-				if(blogger.getStatus().equals("Diamond"))
-					coeff = 1.4;
-				double sum = blogger.getCountOfSubscribers() * coeff;
-				for (int j = 0; j < arr.length(); j++)
-				{
-					Video video = new Video();
-					video.setTag(arr.getJSONObject(j).getString("tag"));
-					if(!video.getTag().equals(order.getTag()))
-						continue;
-					video.setCountOfDislikes(arr.getJSONObject(j).getInt("countOfDislikes"));
-					video.setCountOfLikes(arr.getJSONObject(j).getInt("countOfLikes"));
-					video.setCountOfViews(arr.getJSONObject(j).getInt("countOfViews"));
-					sum += Math.abs(video.getCountOfLikes() - video.getCountOfDislikes()) + video.getCountOfViews() / 1000;
-				}
-				if(sum > maxSum)
-				{
-					maxSum = sum;
-					bloggerId = blogger.getId();
-				}
-			}
-		}
-		catch (Throwable t)
-		{
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		if(bloggerId == -1)
-			return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-		order.setBlogger(bloggerId);
-		orderService.saveOrder(order);
-
-		return new ResponseEntity<Order>(order, HttpStatus.CREATED);
+		return orderService.createOrder(order);
 	}
 
 	@RequestMapping(value = "/order/status/{id}", method = RequestMethod.PUT)
@@ -162,14 +99,16 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		RestTemplate template = new RestTemplate();
-		//template.put("http://localhost:9898/users/user_account/{id}/{sum}", currentOrder.getBlogger(), currentOrder.getSum());
+		if(order.getState().equals("Done")) {
+			RestTemplate template = new RestTemplate();
+			Map<String, String> param = new HashMap<String, String>();
+			param.put("id", Integer.toString(order.getOwner()));
+			param.put("sum", Double.toString(-order.getSum()));
+			param.put("external", Boolean.toString(false));
+			template.put("http://localhost:9898/users/user_account/{id}/{sum}/{external}", null, param);
+		}
 		currentOrder.setState(order.getState());
 		orderService.updateOrder(currentOrder);
-		if(order.getState().equals("Done"))
-		{
-			//send message to advertiser and blogger
-		}
 		return new ResponseEntity<Order>(currentOrder, HttpStatus.OK);
 	}
 

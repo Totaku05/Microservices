@@ -1,6 +1,8 @@
 package microservices.users.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.util.Pair;
 import microservices.users.model.*;
@@ -155,7 +157,6 @@ public class RestApiController {
 		userService.updateUser(currentUser);
 		contactInfoService.updateInfo(currentInfo);
 
-		RestTemplate template = new RestTemplate();
 		if(currentUser.getRole().equals("Advertiser"))
 		{
 			Advertiser currentAdvertiser = advertiserService.findById(id);
@@ -183,7 +184,6 @@ public class RestApiController {
 
 		User currentUser = userService.findById(id);
 		int card_number = 0;
-		double account = 0;
 
 		if (currentUser == null) {
 			logger.error("Unable to update. User with id {} not found.", id);
@@ -191,10 +191,26 @@ public class RestApiController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		if(currentUser.getRole().equals("Advertiser"))
-            card_number = advertiserService.updateAccount(id, sum);
-		else
-            card_number = bloggerService.updateAccount(id, sum);
+		try
+		{
+			if(currentUser.getRole().equals("Advertiser")) {
+				if(external && advertiserService.findById(id).getAccount() + sum > 0)
+					userService.externalOperation(advertiserService.findById(id).getCard_number(), sum);
+				card_number = advertiserService.updateAccount(id, sum);
+			}
+			else {
+				if(external && advertiserService.findById(id).getAccount() + sum > 0)
+					userService.externalOperation(bloggerService.findById(id).getCard_number(), sum);
+				card_number = bloggerService.updateAccount(id, sum);
+			}
+		} catch (HttpClientErrorException e) {
+			try {
+				JSONObject object = new JSONObject(e.getResponseBodyAsString());
+				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
+			} catch (Throwable t) {
+				return new ResponseEntity(new CustomErrorType("Account updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
 
 		if(card_number < 0)
 		{
@@ -203,32 +219,27 @@ public class RestApiController {
                     HttpStatus.BAD_REQUEST);
 		}
 
-		//user wants to withdraw or enter money into the system
-		if(external)
-			try {
-				RestTemplate template = new RestTemplate();
-				template.put("http://localhost:9696/payment/withdraw_money/{card_number}/{sum}", card_number, sum);
-			} catch (HttpClientErrorException e) {
-				try {
-					JSONObject object = new JSONObject(e.getResponseBodyAsString());
-					return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-				} catch (Throwable t) {
-					return new ResponseEntity(new CustomErrorType("Account updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-				}
-			}
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
 	}
 
-    @RequestMapping(value = "/status/{id}/{status}", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateBloggerStatus(@PathVariable("id") int id, @PathVariable("status") String status) {
-        if(!bloggerService.updateBloggerStatus(id, status))
-        {
-            logger.error("Unable to update. You haven't such sum of money.");
-            return new ResponseEntity(new CustomErrorType("Unable to update. You haven't such sum of money."),
-                    HttpStatus.BAD_REQUEST);
-        }
+    @RequestMapping(value = "/minPrice/{id}/{minPrice}", method = RequestMethod.PUT)
+    public ResponseEntity<?> updateBloggerMinPrice(@PathVariable("id") int id, @PathVariable("minPrice") Double minPrice) {
+		Blogger currentBlogger = bloggerService.findById(id);
+		currentBlogger.setMinPrice(minPrice);
+		bloggerService.updateBlogger(currentBlogger);
         return new ResponseEntity(HttpStatus.OK);
     }
+
+	@RequestMapping(value = "/status/{id}/{status}", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateBloggerStatus(@PathVariable("id") int id, @PathVariable("status") String status) {
+		if(!bloggerService.updateBloggerStatus(id, status))
+		{
+			logger.error("Unable to update. You haven't such sum of money.");
+			return new ResponseEntity(new CustomErrorType("Unable to update. You haven't such sum of money."),
+					HttpStatus.BAD_REQUEST);
+		}
+		return new ResponseEntity(HttpStatus.OK);
+	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deleteUser(@PathVariable("id") int id) {

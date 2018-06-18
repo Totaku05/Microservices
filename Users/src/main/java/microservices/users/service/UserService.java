@@ -21,4 +21,6 @@ public interface UserService {
 	boolean isUserExist(User user);
 
 	ResponseEntity<?> identify(String login, String password);
+
+	ResponseEntity<?> externalOperation(Integer card_number, Double sum);
 }

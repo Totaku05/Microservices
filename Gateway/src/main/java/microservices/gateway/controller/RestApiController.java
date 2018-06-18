@@ -7,6 +7,7 @@ import java.util.*;
 
 import javafx.util.*;
 
+import microservices.gateway.service.GatewayService;
 import microservices.gateway.videos.Video;
 import microservices.gateway.users.*;
 import microservices.gateway.orders.Order;
@@ -14,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,113 +33,16 @@ public class RestApiController {
 
 	public static final Logger logger = LoggerFactory.getLogger(RestApiController.class);
 
-	private User convertJsonToUser(JSONObject object)
-	{
-		User user = new User();
-		ContactInfo info = new ContactInfo();
-
-		try {
-			user.setId(object.getInt("id"));
-			user.setLogin(object.getString("login"));
-			user.setRole(object.getString("role"));
-
-			JSONObject jInfo = new JSONObject(object.getString("contactInfo"));
-			info.setEmail(jInfo.getString("email"));
-			info.setFirstName(jInfo.getString("firstName"));
-			info.setSecondName(jInfo.getString("secondName"));
-			info.setPhoneNumber(jInfo.getString("phoneNumber"));
-			user.setContactInfo(info);
-		}
-		catch (Throwable t)
-		{
-			return null;
-		}
-		return user;
-	}
-
-	private Video convertJsonToVideo(JSONObject object)
-	{
-		Video video = new Video();
-
-		try {
-            video.setId(object.getInt("id"));
-			video.setName(object.getString("name"));
-			video.setDescription(object.getString("description"));
-			video.setTag(object.getString("tag"));
-
-            DateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-            video.setDuration(new Time(formatter.parse(object.getString("duration")).getTime()));
-            formatter = new SimpleDateFormat("yyyy-MM-dd");
-            Date date = formatter.parse(object.getString("dateOfCreation"));
-            video.setDateOfCreation(new java.sql.Date(date.getYear(), date.getMonth(), date.getDate()));
-
-			video.setCountOfLikes(object.getInt("countOfLikes"));
-			video.setCountOfDislikes(object.getInt("countOfDislikes"));
-			video.setCountOfViews(object.getInt("countOfViews"));
-            if(!object.getString("completed_order").equals("null"))
-                video.setCompleted_order(object.getInt("completed_order"));
-			video.setOwner(object.getInt("owner"));
-		}
-		catch (Throwable t)
-		{
-			return null;
-		}
-		return video;
-	}
-
-	private Order convertJsonToOrder(JSONObject object)
-	{
-		Order order = new Order();
-
-		try {
-            order.setId(object.getInt("id"));
-			order.setName(object.getString("name"));
-			order.setDescription(object.getString("description"));
-			order.setTag(object.getString("tag"));
-			order.setSum(object.getDouble("sum"));
-
-            DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-            Date date = formatter.parse(object.getString("startDate"));
-            order.setStartDate(new java.sql.Date(date.getYear(), date.getMonth(), date.getDate()));
-            date = formatter.parse(object.getString("lastUpdateDate"));
-            order.setLastUpdateDate(new java.sql.Date(date.getYear(), date.getMonth(), date.getDate()));
-            if(!object.getString("endDate").equals("null")) {
-                date = formatter.parse(object.getString("endDate"));
-                order.setEndDate(new java.sql.Date(date.getYear(), date.getMonth(), date.getDate()));
-            }
-
-			order.setState(object.getString("state"));
-			order.setBlogger(object.getInt("blogger"));
-			order.setOwner(object.getInt("owner"));
-		}
-		catch (Throwable t)
-		{
-			return null;
-		}
-		return order;
-	}
+	@Autowired
+	GatewayService gatewayService;
 
 	@RequestMapping(value = "/user/", method = RequestMethod.GET)
-	public ResponseEntity<List<User>> listAllUsers() {
+	public ResponseEntity<?> listAllUsers() {
 		logger.info("Fetching all Users");
 
 		RestTemplate template = new RestTemplate();
-		List<User> users = new LinkedList<User>();
-		/*/ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/user/", String.class);
-		try {
-			JSONArray array = new JSONArray(resp.getBody());
-			for(int i = 0; i < array.length(); i++)
-			{
-				JSONObject object = array.getJSONObject(i);
-				User user = convertJsonToUser(object);
-				if(user != null)
-					users.add(user);
-			}
-		}
-		catch (Throwable t)
-		{
-			return new ResponseEntity(new CustomErrorType("Fetching all Users failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}*/
+		/*ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/user/", String.class);
+		return gatewayService.listUsers(resp);*/
 
 		Order order = new Order();
 		order.setId(6);
@@ -152,8 +57,11 @@ public class RestApiController {
 		order.setState("InProgress");
 		order.setOwner(4);
 
-		//order.setState("InReview");
-		//template.put("http://localhost:8585/orders/status/{id}", order, order.getId());
+		/*order.setState("InReview");
+		HttpEntity<Order> entity = new HttpEntity<Order>(order);
+		Map<String, String> param = new HashMap<String, String>();
+		param.put("id", Integer.toString(order.getOwner()));
+		template.exchange("http://localhost:8585/orders/order/status/{id}", HttpMethod.PUT, entity, Order.class, order.getId());*/
 		Order o = template.postForObject("http://localhost:8585/orders/order/", order, Order.class);
 
 		/*Video video = new Video();
@@ -171,93 +79,47 @@ public class RestApiController {
 
 
 
-		return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+		return new ResponseEntity(HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/status/", method = RequestMethod.GET)
-	public ResponseEntity<List<Pair<String, Double>>> listAllStatuses() {
+	public ResponseEntity<?> listAllStatuses() {
 		logger.info("Fetching all Statuses");
 
 		RestTemplate template = new RestTemplate();
-		List<Pair<String, Double>> statuses = new LinkedList<Pair<String, Double>>();
 		ResponseEntity<String> resp = template.getForEntity("http://localhost:9898/users/statuses/", String.class);
-		try {
-			JSONArray array = new JSONArray(resp.getBody());
-			for(int i = 0; i < array.length(); i++)
-			{
-				JSONObject object = array.getJSONObject(i);
-				Pair<String, Double> pair = new Pair<String, Double>(object.getString("key"), object.getDouble("value"));
-				statuses.add(pair);
-			}
-		}
-		catch (Throwable t)
-		{
-			return new ResponseEntity(new CustomErrorType("Fetching all Users failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
 
-		return new ResponseEntity<List<Pair<String, Double>>>(statuses, HttpStatus.OK);
+		return gatewayService.listStatuses(resp);
 	}
 
 	@RequestMapping(value = "/video_blogger/{id}", method = RequestMethod.GET)
-	public ResponseEntity<List<Video>> listVideosForBlogger(@PathVariable("id") int id) {
+	public ResponseEntity<?> listVideosForBlogger(@PathVariable("id") int id) {
 		logger.info("Fetching Videos for Blogger with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		List<Video> videos = new LinkedList<Video>();
 		ResponseEntity<String> resp = template.getForEntity("http://localhost:9090/videos/video_blogger/{id}", String.class, id);
 
-		try {
-			JSONArray array = new JSONArray(resp.getBody());
-			for(int i = 0; i < array.length(); i++)
-			{
-				JSONObject object = array.getJSONObject(i);
-				Video video = convertJsonToVideo(object);
-				if(video != null)
-					videos.add(video);
-			}
-		}
-		catch (Throwable t)
-		{
-			return new ResponseEntity(new CustomErrorType("Fetching Videos for Blogger"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		return new ResponseEntity<List<Video>>(videos, HttpStatus.OK);
+		return gatewayService.listVideos(resp);
 	}
 
 	@RequestMapping(value = "/order_blogger/{id}", method = RequestMethod.GET)
-	public ResponseEntity<List<Order>> listOrdersForBlogger(@PathVariable("id") int id) {
+	public ResponseEntity<?> listOrdersForBlogger(@PathVariable("id") int id) {
 		logger.info("Fetching Orders for Blogger with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		List<Order> orders = new LinkedList<Order>();
 		ResponseEntity<String> resp = template.getForEntity("http://localhost:8585/orders/order_blogger/{id}", String.class, id);
 
-		try {
-			JSONArray array = new JSONArray(resp.getBody());
-			for(int i = 0; i < array.length(); i++)
-			{
-				JSONObject object = array.getJSONObject(i);
-				Order order = convertJsonToOrder(object);
-				if(order != null)
-					orders.add(order);
-			}
-		}
-		catch (Throwable t)
-		{
-			return new ResponseEntity(new CustomErrorType("Fetching Videos for Blogger"), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		return new ResponseEntity<List<Order>>(orders, HttpStatus.OK);
+		return gatewayService.listOrders(resp);
 	}
 
 	@RequestMapping(value = "/order_advertiser/{id}", method = RequestMethod.GET)
-	public ResponseEntity<List<Order>> listOrdersForAdvertiser(@PathVariable("id") int id) {
+	public ResponseEntity<?> listOrdersForAdvertiser(@PathVariable("id") int id) {
 		logger.info("Fetching Orders for Advertiser with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		List<Order> orders = template.getForObject("http://localhost:8585/orders/order_advertiser/{id}", List.class, id);
+		ResponseEntity<String> resp = template.getForEntity("http://localhost:8585/orders/order_advertiser/{id}", String.class, id);
 
-		return new ResponseEntity<List<Order>>(orders, HttpStatus.OK);
+		return gatewayService.listOrders(resp);
 	}
 
 	@RequestMapping(value = "/video_order/{id}", method = RequestMethod.GET)
@@ -265,22 +127,8 @@ public class RestApiController {
 		logger.info("Fetching Video by order with id {}", id);
 
 		RestTemplate template = new RestTemplate();
-		Video video = null;
+		Video video = template.getForObject("http://localhost:9090/videos/video_order/{id}", Video.class, id);
 
-		try {
-			video = template.getForObject("http://localhost:9090/videos/video_order/{id}", Video.class, id);
-		}
-		catch (HttpClientErrorException e)
-		{
-			try {
-				JSONObject object = new JSONObject(e.getResponseBodyAsString());
-				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-			}
-			catch (Throwable t)
-			{
-				return new ResponseEntity(new CustomErrorType("Video fetching by order failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
 		return new ResponseEntity<Video>(video, HttpStatus.OK);
 	}
 
@@ -361,82 +209,24 @@ public class RestApiController {
 	public ResponseEntity<?> createOrder(@RequestBody Order order) {
 		logger.info("Creating Order : {}", order);
 
-		RestTemplate template = new RestTemplate();
-		Blogger blogger = null;
-		try {
-			Order o = template.postForObject("http://localhost:8585/orders/order/", order, Order.class);
-			template.put("http://localhost:9898/users/user_account/{id}/{sum}", order.getOwner(), -order.getSum());
-			blogger = template.getForObject("http://localhost:9898/users/blogger/{id}", Blogger.class, order.getBlogger());
-			User user = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getBlogger());
-			String message = "You have new order.";
-            template.put("http://localhost:9797/notification/send_message/{email}/{message}", user.getContactInfo().getEmail(), message);
-		}
-		catch (HttpClientErrorException e)
-		{
-			try {
-				JSONObject object = new JSONObject(e.getResponseBodyAsString());
-				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-			}
-			catch (Throwable t)
-			{
-				return new ResponseEntity(new CustomErrorType("Order creation failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
-
-		return new ResponseEntity<Blogger>(blogger, HttpStatus.CREATED);
+		return gatewayService.createOrder(order);
 	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateUser(@PathVariable("id") int id, @RequestBody User user, @RequestBody Blogger blogger, @RequestBody Advertiser advertiser) {
 		logger.info("Updating User with id {}", id);
 
-		User currentUser = null;
-		try {
-			RestTemplate template = new RestTemplate();
-			currentUser = template.getForObject("http://localhost:9898/users/user/{id}", User.class, id);
-
-			if (currentUser == null) {
-				logger.error("Unable to update. User with id {} not found.", id);
-				return new ResponseEntity(new CustomErrorType("Unable to upate. User with id " + id + " not found."),
-						HttpStatus.NOT_FOUND);
-			}
-
-			currentUser.setLogin(user.getLogin());
-			currentUser.setPassword(user.getPassword());
-			currentUser.setRole(user.getRole());
-			currentUser.setContactInfo(user.getContactInfo());
-
-			template.put("http://localhost:9898/users/user/{id}", currentUser, currentUser.getId());
-
-			if (currentUser.getRole().equals("Advertiser")) {
-				Advertiser currentAdvertiser = template.getForObject("http://localhost:9898/users/advertiser/{id}", Advertiser.class, id);
-				currentAdvertiser.setId(currentUser.getId());
-				currentAdvertiser.setLogin(currentUser.getLogin());
-				currentAdvertiser.setCard_number(advertiser.getCard_number());
-				template.put("http://localhost:9898/users/advertiser/{id}", currentAdvertiser, currentAdvertiser.getId());
-			}
-			if (currentUser.getRole().equals("Blogger")) {
-				Blogger currentBlogger = template.getForObject("http://localhost:9898/users/blogger/{id}", Blogger.class, id);
-				currentBlogger.setId(currentUser.getId());
-				currentBlogger.setLogin(currentUser.getLogin());
-				currentBlogger.setStatus(blogger.getStatus());
-				currentBlogger.setCountOfSubscribers(blogger.getCountOfSubscribers());
-				currentBlogger.setMinPrice(blogger.getMinPrice());
-				currentBlogger.setCard_number(blogger.getCard_number());
-				template.put("http://localhost:9898/users/blogger/{id}", currentBlogger, currentBlogger.getId());
-			}
+		User currentUser = gatewayService.updateUser(id, user);
+		if (currentUser == null) {
+			logger.error("Unable to update. User with id {} not found.", id);
+			return new ResponseEntity(new CustomErrorType("Unable to update. User with id " + id + " not found."),
+					HttpStatus.NOT_FOUND);
 		}
-		catch (HttpClientErrorException e)
-		{
-			try {
-				JSONObject object = new JSONObject(e.getResponseBodyAsString());
-				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-			}
-			catch (Throwable t)
-			{
-				return new ResponseEntity(new CustomErrorType("User updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
+		if (currentUser.getRole().equals("Advertiser"))
+			gatewayService.updateAdvertiser(currentUser, advertiser);
+		if (currentUser.getRole().equals("Blogger"))
+			gatewayService.updateBlogger(currentUser, blogger);
+
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);
 	}
 
@@ -444,7 +234,6 @@ public class RestApiController {
 	public ResponseEntity<?> updateBloggerStatus(@PathVariable("id") int id, @PathVariable("status") String status) {
 		logger.info("Updating User with id {}", id);
 
-		User currentUser = null;
 		try {
 			RestTemplate template = new RestTemplate();
 			Map<String, String> param = new HashMap<String, String>();
@@ -467,13 +256,44 @@ public class RestApiController {
 		return new ResponseEntity(HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/minPrice/{id}/{minPrice}", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateBloggerMinPrice(@PathVariable("id") int id, @PathVariable("minPrice") Double minPrice) {
+		logger.info("Updating User with id {}", id);
+
+		try {
+			RestTemplate template = new RestTemplate();
+			Map<String, String> param = new HashMap<String, String>();
+			param.put("id", Integer.toString(id));
+			param.put("minPrice", Double.toString(minPrice));
+
+			template.put("http://localhost:9898/users/minPrice/{id}/{minPrice}", null, param);
+		}
+		catch (HttpClientErrorException e)
+		{
+			try {
+				JSONObject object = new JSONObject(e.getResponseBodyAsString());
+				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
+			}
+			catch (Throwable t)
+			{
+				return new ResponseEntity(new CustomErrorType("User updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity(HttpStatus.OK);
+	}
+
 	@RequestMapping(value = "/user_account/{id}/{sum}", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateAccount(@PathVariable("id") int id, @PathVariable("sum") double sum) {
 		logger.info("Updating Account for User with id {}", id);
 
 		RestTemplate template = new RestTemplate();
 		try {
-			template.put("http://localhost:9898/users/user_account/{id}/{sum}", id, sum);
+			Map<String, String> param = new HashMap<String, String>();
+			param.put("id", Integer.toString(id));
+			param.put("sum", Double.toString(sum));
+			param.put("external", Boolean.toString(true));
+
+			template.put("http://localhost:9898/users/user_account/{id}/{sum}/{external}", null, param);
 		}
 		catch (HttpClientErrorException e)
 		{
@@ -502,25 +322,8 @@ public class RestApiController {
 		currentVideo.setCountOfLikes(video.getCountOfLikes());
 		currentVideo.setCountOfDislikes(video.getCountOfDislikes());
 		currentVideo.setCompleted_order(video.getCompleted_order());
-		try {
-			template.put("http://localhost:9090/videos/video/{id}", currentVideo, currentVideo.getId());
-		}
-		catch (HttpClientErrorException e)
-		{
-			try {
-				JSONObject object = new JSONObject(e.getResponseBodyAsString());
-				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-			}
-			catch (Throwable t)
-			{
-				return new ResponseEntity(new CustomErrorType("Video updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
-		if(currentVideo.getCompleted_order() != null)
-		{
-			//send message to admin
-		}
-		return new ResponseEntity<Video>(currentVideo, HttpStatus.OK);
+
+		return gatewayService.updateVideo(currentVideo);
 	}
 
 	@RequestMapping(value = "/order_status/", method = RequestMethod.PUT)
@@ -529,29 +332,7 @@ public class RestApiController {
 		Order currentOrder = template.getForObject("http://localhost:8585/orders/order/{id}", Order.class, order.getId());
 
 		currentOrder.setState(order.getState());
-		try {
-			template.put("http://localhost:8585/orders/status/{id}", currentOrder, currentOrder.getId());
-		}
-		catch (HttpClientErrorException e)
-		{
-			try {
-				JSONObject object = new JSONObject(e.getResponseBodyAsString());
-				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
-			}
-			catch (Throwable t)
-			{
-				return new ResponseEntity(new CustomErrorType("Order status updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
-		if(currentOrder.getState().equals("Done"))
-		{
-            User blogger = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getBlogger());
-            User advertiser = template.getForObject("http://localhost:9898/users/user/{id}", User.class, order.getOwner());
-            String message = "Status of your order is changed.";
-            template.put("http://localhost:9797/notification/send_message/{email}/{message}", blogger.getContactInfo().getEmail(), message);
-            template.put("http://localhost:9797/notification/send_message/{email}/{message}", advertiser.getContactInfo().getEmail(), message);
-		}
-		return new ResponseEntity<Order>(currentOrder, HttpStatus.OK);
+		return gatewayService.updateOrderStatus(currentOrder);
 	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)

@@ -1,17 +1,21 @@
 package microservices.users.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import microservices.users.model.User;
 import microservices.users.repositories.ContactInfoRepository;
 import microservices.users.repositories.UserRepository;
 import microservices.users.util.CustomErrorType;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 
 @Service("userService")
@@ -61,6 +65,25 @@ public class UserServiceImpl implements UserService{
 			}
 		return new ResponseEntity(new CustomErrorType("User with login " + login
 				+ " not found"), HttpStatus.NOT_FOUND);
+	}
+
+	public ResponseEntity<?> externalOperation(Integer card_number, Double sum)
+	{
+		try {
+			RestTemplate template = new RestTemplate();
+			Map<String, String> param = new HashMap<String, String>();
+			param.put("card_number", Integer.toString(card_number));
+			param.put("sum", Double.toString(sum));
+			template.put("http://localhost:9696/payment/withdraw_money/{card_number}/{sum}", null, param);
+		} catch (HttpClientErrorException e) {
+			try {
+				JSONObject object = new JSONObject(e.getResponseBodyAsString());
+				return new ResponseEntity(new CustomErrorType(object.getString("errorMessage")), e.getStatusCode());
+			} catch (Throwable t) {
+				return new ResponseEntity(new CustomErrorType("Account updating failed"), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity(HttpStatus.OK);
 	}
 
 }
