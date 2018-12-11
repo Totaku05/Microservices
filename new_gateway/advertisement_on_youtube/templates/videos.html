@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Videos{% endblock %}
+
+{% block content %}
+	{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+	<li><a href="/adv/orders/ ">Orders</a></li>
+	<li><a href="/adv/change_user_info/ ">Сhange info</a></li>
+	<li><a href="/adv/update_account/ ">Update account</a></li>
+	{% if role == "Advertiser" %}
+		<li><a href="/adv/new_order/ ">Create new order</a></li>
+	{% else %}
+		<li><a href="/adv/new_video/ ">Create new video</a></li>
+		<li><a href="/adv/update_status/ ">Update status</a></li>
+	{% endif %}
+	<br />
+	{% if videos %}
+		<table>
+			<tr>
+				<th width="50">Name</th>
+				<th width="300">Description</th>
+				<th width="10">Tag</th>
+				<th width="100">Date of creation</th>
+				<th width="100">Duration</th>
+				<th width="20">Count of likes</th>
+				<th width="20">Count of dislikes</th>
+				<th width="20">Count of views</th>
+				<th width="20">Completed order</th>
+			</tr>
+			{% for video in videos %}
+				<form action="/adv/update_video/" method="get">
+					{% csrf_token %}
+					<tr>
+						<td width="50" align="center">{{ video.name }}</td>
+						<td width="300" align="center">{{ video.description }}</td>
+						<td width="10" align="center">{{ video.tag }}</td>
+						<td width="20" align="center">{{ video.dateOfCreation }}</td>
+						<td width="10" align="center">{{ video.duration }}</td>
+						<td width="100" align="center">{{ video.countOfLikes }}</td>
+						<td width="100" align="center">{{ video.countOfDislikes }}</td>
+						<td width="100" align="center">{{ video.countOfViews }}</td>
+						<td width="100" align="center">{{ video.nameOfOrder }}</td>
+						<td width="20" align="center"><input type="hidden" name="video_id" value="{{ video.id }}" /><input type="submit" value="Update" /></td>
+					</tr>
+				</form>
+			{% endfor %}
+		</table>
+	{% endif %}
+{% endblock %}

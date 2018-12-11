@@ -70,21 +70,21 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/order/", method = RequestMethod.POST)
-	public ResponseEntity<?> createOrder(@RequestBody Order order) {
-		logger.info("Creating Order : {}", order);
+	public ResponseEntity<?> createOrder(@RequestBody String json_string) {
+		Order order = orderService.convertJsonToOrder(json_string);
 
-		if (orderService.isOrderExist(order)) {
-			logger.error("Unable to create. A Order with id {} already exist", order.getId());
-			return new ResponseEntity(new CustomErrorType("Unable to create. A Order id " +
-					order.getId() + " already exist."),HttpStatus.CONFLICT);
+		if (order == null || orderService.isOrderExist(order)) {
+			logger.error("Unable to create. Bad Order info.");
+			return new ResponseEntity(new CustomErrorType("Unable to create. Bad Order info."),HttpStatus.CONFLICT);
 		}
+		logger.info("Creating Order : {}", order);
 
 		return orderService.createOrder(order);
 	}
 
 	@RequestMapping(value = "/order/status/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateOrderStatus(@PathVariable("id") int id, @RequestBody Order order) {
-		logger.info("Updating status of the Order with id {}", id);
+	public ResponseEntity<?> updateOrderStatus(@PathVariable("id") int id, @RequestBody String json_string) {
+		Order order = orderService.convertJsonToOrder(json_string);
 
 		Order currentOrder = orderService.findById(id);
 		if(currentOrder == null) {
@@ -92,6 +92,7 @@ public class RestApiController {
 			return new ResponseEntity(new CustomErrorType("Unable to update status. Order with id " + id + " not found."),
 					HttpStatus.NOT_FOUND);
 		}
+		logger.info("Updating status of the Order with id {}", id);
 
 		if(currentOrder.getState().equals("Done")) {
 			logger.error("Unable to update status. Order with id {} is done.", id);
@@ -102,10 +103,11 @@ public class RestApiController {
 		if(order.getState().equals("Done")) {
 			RestTemplate template = new RestTemplate();
 			Map<String, String> param = new HashMap<String, String>();
-			param.put("id", Integer.toString(order.getOwner()));
-			param.put("sum", Double.toString(-order.getSum()));
+			param.put("id", Integer.toString(order.getBlogger()));
+			param.put("sum", Double.toString(order.getSum()));
 			param.put("external", Boolean.toString(false));
 			template.put("http://localhost:9898/users/user_account/{id}/{sum}/{external}", null, param);
+			currentOrder.setEndDate(order.getEndDate());
 		}
 		currentOrder.setState(order.getState());
 		orderService.updateOrder(currentOrder);

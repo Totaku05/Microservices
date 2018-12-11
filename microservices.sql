@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS users;
 CREATE DATABASE IF NOT EXISTS orders;
 CREATE DATABASE IF NOT EXISTS videos;
+CREATE DATABASE IF NOT EXISTS advertisement;
 
 CREATE TABLE IF NOT EXISTS users.contact_info 
 (id int PRIMARY KEY auto_increment,
@@ -79,16 +80,16 @@ INSERT INTO users.contact_info (firstName, secondName, phoneNumber, email) VALUE
 
 select * from users.user;
 
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Advertiser", "Horizon", 1);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Advertiser", "Alex", 2);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Advertiser", "Philips", 3);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Advertiser", "Cuckoo", 4);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Advertiser", "Altair", 5);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Blogger", "Wind", 6);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Blogger", "Raven", 7);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Blogger", "Mountain", 8);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Blogger", "Sickle", 9);
-INSERT INTO users.user (password, role, login, info) VALUES("123456", "Blogger", "Falcon", 10);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Advertiser", "Horizon", 1);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Advertiser", "Alex", 2);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Advertiser", "Philips", 3);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Advertiser", "Cuckoo", 4);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Advertiser", "Altair", 5);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Blogger", "Wind", 6);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Blogger", "Raven", 7);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Blogger", "Mountain", 8);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Blogger", "Sickle", 9);
+INSERT INTO users.user (password, role, login, info) VALUES("MTIzNDU2", "Blogger", "Falcon", 10);
 
 select * from users.advertiser;
 
@@ -108,11 +109,11 @@ INSERT INTO users.blogger (id, account, card_number, minPrice, countOfSubscriber
 
 select * from orders.orders;
 
-INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("First", "First order", "Food", 50, CURDATE(), CURDATE(), "InProgress", 1, 1);
-INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Second", "Second order", "Tourism", 50, CURDATE(), CURDATE(), "InProgress", 2, 2);
-INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Third", "Third order", "Electronics", 50, CURDATE(), CURDATE(), "InProgress", 3, 3);
-INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Fourth", "Fourth order", "Other", 50, CURDATE(), CURDATE(), "InProgress", 4, 4);
-INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Fifth", "Fifth order", "Other", 50, CURDATE(), CURDATE(), "InProgress", 5, 5);
+INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("First", "First order", "Food", 50, CURDATE(), CURDATE(), "InProgress", 6, 1);
+INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Second", "Second order", "Tourism", 50, CURDATE(), CURDATE(), "InProgress", 7, 2);
+INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Third", "Third order", "Electronics", 50, CURDATE(), CURDATE(), "InProgress", 8, 3);
+INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Fourth", "Fourth order", "Other", 50, CURDATE(), CURDATE(), "InProgress", 9, 4);
+INSERT INTO orders.orders (name, description, tag, sum, startDate, lastUpdateDate, state, blogger, owner) VALUES("Fifth", "Fifth order", "Other", 50, CURDATE(), CURDATE(), "InProgress", 10, 5);
 
 select * from videos.video;
 

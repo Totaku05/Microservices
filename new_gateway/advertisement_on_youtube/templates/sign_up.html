@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up{% endblock %}
+
+{% block content %}
+	{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+	<form action="/adv/sign_up/" method="post">
+		{% csrf_token %}
+		{{ form }}
+		<br />
+		<br />
+		<input type="submit" value="Sign up" />
+	</form>
+{% endblock %}

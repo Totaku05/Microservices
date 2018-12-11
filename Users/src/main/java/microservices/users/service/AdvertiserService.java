@@ -23,4 +23,5 @@ public interface AdvertiserService {
 
 	Integer updateAccount(Integer id, Double sum);
 
+	Advertiser convertJsonToAdvertiser(String json_string);
 }

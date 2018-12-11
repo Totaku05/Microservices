@@ -28,4 +28,5 @@ public interface OrderService {
 
 	ResponseEntity<?> createOrder(Order order);
 
+	Order convertJsonToOrder(String json_string);
 }

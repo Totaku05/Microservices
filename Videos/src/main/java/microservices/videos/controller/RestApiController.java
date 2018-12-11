@@ -70,20 +70,28 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/video/", method = RequestMethod.POST)
-	public ResponseEntity<?> createVideo(@RequestBody Video video) {
-		logger.info("Creating Video : {}", video);
+	public ResponseEntity<?> createVideo(@RequestBody String json_string) {
+	    Video video = videoService.convertJsonToVideo(json_string);
 
-		if (videoService.isVideoExist(video)) {
-			logger.error("Unable to create. A Video with id {} already exist", video.getId());
-			return new ResponseEntity(new CustomErrorType("Unable to create. A Video with id " +
-					video.getId() + " already exist."),HttpStatus.CONFLICT);
+		if (video == null || videoService.isVideoExist(video)) {
+			logger.error("Unable to create. Video with such id already exists");
+			return new ResponseEntity(new CustomErrorType("Unable to create. Video with such id already exists."),HttpStatus.CONFLICT);
 		}
+        logger.info("Creating Video : {}", video);
+
 		videoService.saveVideo(video);
 		return new ResponseEntity<Video>(video, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/video/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateVideo(@PathVariable("id") int id, @RequestBody Video video) {
+	public ResponseEntity<?> updateVideo(@PathVariable("id") int id, @RequestBody String json_string) {
+		Video video = videoService.convertJsonToVideo(json_string);
+		if (video == null) {
+			logger.error("Unable to update. Bad video info.");
+			return new ResponseEntity(new CustomErrorType("Unable to update. Bad video info."),
+					HttpStatus.BAD_REQUEST);
+		}
+
 		logger.info("Updating Video with id {}", id);
 
 		Video currentVideo = videoService.findById(id);

@@ -27,4 +27,6 @@ public interface BloggerService {
 	List<Pair<String, Double>> getStatuses();
 
 	boolean updateBloggerStatus(Integer id, String status);
+
+	Blogger convertJsonToBlogger(String json_string);
 }

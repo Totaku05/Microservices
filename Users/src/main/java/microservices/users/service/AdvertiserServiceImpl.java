@@ -2,6 +2,7 @@ package microservices.users.service;
 
 import microservices.users.model.Advertiser;
 import microservices.users.repositories.AdvertiserRepository;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,4 +65,22 @@ public class AdvertiserServiceImpl implements AdvertiserService {
         return advertiser.getCard_number();
     }
 
+    public Advertiser convertJsonToAdvertiser(String json_string)
+	{
+		Advertiser advertiser = new Advertiser();
+
+		try {
+			JSONObject object = new JSONObject(json_string);
+			object = new JSONObject(object.getString("advertiser"));
+			advertiser.setId(object.getInt("id"));
+			advertiser.setLogin(object.getString("login"));
+			advertiser.setAccount(object.getDouble("account"));
+			advertiser.setCard_number(object.getInt("card_number"));
+		}
+		catch (Throwable t)
+		{
+			return null;
+		}
+		return advertiser;
+	}
 }

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Update account{% endblock %}
+
+{% block content %}
+	{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+	<li><a href="/adv/orders/ ">Orders</a></li>
+	<li><a href="/adv/change_user_info/ ">Сhange info</a></li>
+	{% if role == "Advertiser" %}
+		<li><a href="/adv/new_order/ ">Create new order</a></li>
+	{% else %}
+		<li><a href="/adv/videos/ ">Videos</a></li>
+		<li><a href="/adv/new_video/ ">Create new video</a></li>
+		<li><a href="/adv/update_status/ ">Update status</a></li>
+	{% endif %}
+	<br />
+	<form action="/adv/update_account/" method="post">
+		{% csrf_token %}
+		<label>Your current account: {{ account }}</label><br /><br />
+		{{ form }}
+		<br />
+		<br />
+		<input type="submit" value="Update account" />
+	</form>
+{% endblock %}

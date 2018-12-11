@@ -24,4 +24,6 @@ public interface VideoService {
 	List<Video> findVideosForBlogger(Integer blogger);
 
 	boolean isVideoExist(Video video);
+
+	Video convertJsonToVideo(String json_string);
 }

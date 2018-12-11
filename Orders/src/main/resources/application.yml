@@ -5,7 +5,7 @@ server:
 
 datasource:
   microservice_app:
-    url: jdbc:mysql://localhost:3306/orders
+    url: jdbc:mysql://localhost:3306/orders?useSSL=false
     username: root
     password: 123456789
     driverClassName: com.mysql.jdbc.Driver

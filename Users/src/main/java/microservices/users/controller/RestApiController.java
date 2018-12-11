@@ -114,16 +114,23 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/user/{card_number}", method = RequestMethod.POST)
-	public ResponseEntity<?> createUser(@RequestBody User user, @PathVariable("card_number") Integer card_number) {
+	public ResponseEntity<?> createUser(@RequestBody String json_string, @PathVariable("card_number") Integer card_number) {
+		User user = userService.convertJsonToUser(json_string);
+
+		if (user == null || userService.findByLogin(user.getLogin()) != null) {
+			logger.error("Unable to create. User with such login already exists");
+			return new ResponseEntity(new CustomErrorType("User with such login already exists."),HttpStatus.CONFLICT);
+		}
 		logger.info("Creating User : {}", user);
 
-		if (userService.isUserExist(user)) {
-			logger.error("Unable to create. A User with name {} already exist", user.getContactInfo().getFirstName() + " " + user.getContactInfo().getSecondName());
-			return new ResponseEntity(new CustomErrorType("Unable to create. A User with name " +
-					user.getContactInfo().getFirstName() + " " + user.getContactInfo().getSecondName() + " already exist."),HttpStatus.CONFLICT);
-		}
 		userService.saveUser(user);
 		contactInfoService.saveInfo(user.getContactInfo());
+
+        User tmp = userService.findByLogin(user.getLogin());
+        user.setId(tmp.getId());
+        user.setInfo(tmp.getId());
+        userService.saveUser(user);
+
 		if(user.getRole().equals("Advertiser"))
 			advertiserService.newAdvertiser(user.getId(), user.getLogin(), card_number);
 		else
@@ -132,9 +139,10 @@ public class RestApiController {
 	}
 
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateUser(@PathVariable("id") int id, @RequestBody User user, @RequestBody Blogger blogger, @RequestBody Advertiser advertiser) {
+	public ResponseEntity<?> updateUser(@PathVariable("id") int id, @RequestBody String json_string) {
 		logger.info("Updating User with id {}", id);
 
+		User user = userService.convertJsonToUser(json_string);
 		User currentUser = userService.findById(id);
 
 		if (currentUser == null) {
@@ -159,6 +167,7 @@ public class RestApiController {
 
 		if(currentUser.getRole().equals("Advertiser"))
 		{
+			Advertiser advertiser = advertiserService.convertJsonToAdvertiser(json_string);
 			Advertiser currentAdvertiser = advertiserService.findById(id);
 			currentAdvertiser.setLogin(currentUser.getLogin());
 			currentAdvertiser.setCard_number(advertiser.getCard_number());
@@ -166,6 +175,7 @@ public class RestApiController {
 		}
 		if(currentUser.getRole().equals("Blogger"))
 		{
+			Blogger blogger = bloggerService.convertJsonToBlogger(json_string);
 			Blogger currentBlogger = bloggerService.findById(id);
 			currentBlogger.setLogin(currentUser.getLogin());
 			currentBlogger.setStatus(blogger.getStatus());
@@ -199,7 +209,7 @@ public class RestApiController {
 				card_number = advertiserService.updateAccount(id, sum);
 			}
 			else {
-				if(external && advertiserService.findById(id).getAccount() + sum > 0)
+				if(external && bloggerService.findById(id).getAccount() + sum > 0)
 					userService.externalOperation(bloggerService.findById(id).getCard_number(), sum);
 				card_number = bloggerService.updateAccount(id, sum);
 			}

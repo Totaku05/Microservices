@@ -1,5 +1,6 @@
 package microservices.orders.service;
 
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -194,4 +195,40 @@ public class OrderServiceImpl implements OrderService {
 		return new ResponseEntity<Order>(order, HttpStatus.CREATED);
 	}
 
+	public Order convertJsonToOrder(String json_string)
+	{
+		Order order = new Order();
+
+		try {
+			JSONObject object = new JSONObject(json_string);
+			order.setId(object.getInt("id"));
+			order.setName(object.getString("name"));
+			order.setDescription(object.getString("description"));
+			order.setTag(object.getString("tag"));
+			order.setSum(object.getDouble("sum"));
+
+			JSONObject date = object.getJSONObject("startDate");
+			String str_date = String.format("%d-%02d-%02d", date.getInt("year"), date.getInt("month"), date.getInt("day"));
+			order.setStartDate(Date.valueOf(str_date));
+
+			date = object.getJSONObject("lastUpdateDate");
+			str_date = String.format("%d-%02d-%02d", date.getInt("year"), date.getInt("month"), date.getInt("day"));
+			order.setLastUpdateDate(Date.valueOf(str_date));
+
+			if(!object.getString("endDate").equals("null")) {
+				date = object.getJSONObject("endDate");
+				str_date = String.format("%d-%02d-%02d", date.getInt("year"), date.getInt("month"), date.getInt("day"));
+				order.setEndDate(Date.valueOf(str_date));
+			}
+
+			order.setState(object.getString("state"));
+			order.setBlogger(object.getInt("blogger"));
+			order.setOwner(object.getInt("owner"));
+		}
+		catch (Throwable t)
+		{
+			return null;
+		}
+		return order;
+	}
 }

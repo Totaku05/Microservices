@@ -100,6 +100,7 @@ public class JpaConfiguration {
 		properties.put("hibernate.hbm2ddl.auto", environment.getRequiredProperty("datasource.microservice_app.hibernate.hbm2ddl.method"));
 		properties.put("hibernate.show_sql", environment.getRequiredProperty("datasource.microservice_app.hibernate.show_sql"));
 		properties.put("hibernate.format_sql", environment.getRequiredProperty("datasource.microservice_app.hibernate.format_sql"));
+		properties.put("hibernate.id.new_generator_mappings", "false");
 		if(StringUtils.isNotEmpty(environment.getRequiredProperty("datasource.microservice_app.defaultSchema"))){
 			properties.put("hibernate.default_schema", environment.getRequiredProperty("datasource.microservice_app.defaultSchema"));
 		}

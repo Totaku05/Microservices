@@ -3,6 +3,7 @@ package microservices.users.service;
 import javafx.util.Pair;
 import microservices.users.model.Blogger;
 import microservices.users.repositories.BloggerRepository;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,19 +89,19 @@ public class BloggerServiceImpl implements BloggerService{
 		Blogger blogger = findById(id);
 		switch (status) {
 			case "Bronze":
-				if (updateAccount(id, 100.0) == -1)
+				if (updateAccount(id, -100.0) == -1)
 					return false;
 				break;
 			case "Silver":
-				if (updateAccount(id, 200.0) == -1)
+				if (updateAccount(id, -200.0) == -1)
 					return false;
 				break;
 			case "Gold":
-				if (updateAccount(id, 300.0) == -1)
+				if (updateAccount(id, -300.0) == -1)
 					return false;
 				break;
 			case "Diamond":
-				if (updateAccount(id, 400.0) == -1)
+				if (updateAccount(id, -400.0) == -1)
 					return false;
 				break;
 		}
@@ -109,4 +110,25 @@ public class BloggerServiceImpl implements BloggerService{
 		return true;
 	}
 
+	public Blogger convertJsonToBlogger(String json_string)
+	{
+		Blogger blogger = new Blogger();
+
+		try {
+			JSONObject object = new JSONObject(json_string);
+			object = new JSONObject(object.getString("blogger"));
+			blogger.setId(object.getInt("id"));
+			blogger.setAccount(object.getDouble("account"));
+			blogger.setCard_number(object.getInt("card_number"));
+			blogger.setMinPrice(object.getDouble("minPrice"));
+			blogger.setCountOfSubscribers(object.getInt("countOfSubscribers"));
+			blogger.setStatus(object.getString("status"));
+			blogger.setLogin(object.getString("login"));
+		}
+		catch (Throwable t)
+		{
+			return null;
+		}
+		return blogger;
+	}
 }

@@ -7,7 +7,6 @@ import java.util.Objects;
 @Table(name = "blogger")
 public class Blogger {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "account", nullable = false)

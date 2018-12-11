@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block content %}
+	{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+	<form action="/adv/" method="post">
+		{% csrf_token %}
+		{{ form }}
+		<br />
+		<br />
+		<input type="submit" value="Sign in" />
+	</form>
+
+	<li><a href="/adv/sign_up/?role=Advertiser ">Sign up as advertiser</a></li>
+	<li><a href="/adv/sign_up/?role=Blogger ">Sign up as blogger</a></li>
+{% endblock %}

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import microservices.users.model.ContactInfo;
 import microservices.users.model.User;
 import microservices.users.repositories.ContactInfoRepository;
 import microservices.users.repositories.UserRepository;
@@ -29,6 +30,18 @@ public class UserServiceImpl implements UserService{
 	{
 		return userRepository.findOne(id);
 	}
+
+	public User findByLogin(String login)
+    {
+        List<User> users = findAllUsers();
+        if (users.isEmpty())
+            return null;
+        for(User user : users) {
+            if (user.getLogin().equals(login))
+                return user;
+        }
+        return null;
+    }
 
 	public void saveUser(User user) {
 		userRepository.save(user);
@@ -86,4 +99,30 @@ public class UserServiceImpl implements UserService{
 		return new ResponseEntity(HttpStatus.OK);
 	}
 
+    public User convertJsonToUser(String json_string)
+    {
+        User user = new User();
+        ContactInfo info = new ContactInfo();
+
+        try {
+            JSONObject object = new JSONObject(json_string);
+            object = new JSONObject(object.getString("user"));
+            user.setId(object.getInt("id"));
+            user.setLogin(object.getString("login"));
+            user.setPassword(object.getString("password"));
+            user.setRole(object.getString("role"));
+
+            JSONObject jInfo = new JSONObject(object.getString("contactInfo"));
+            info.setEmail(jInfo.getString("email"));
+            info.setFirstName(jInfo.getString("firstName"));
+            info.setSecondName(jInfo.getString("secondName"));
+            info.setPhoneNumber(jInfo.getString("phoneNumber"));
+            user.setContactInfo(info);
+        }
+        catch (Throwable t)
+        {
+            return null;
+        }
+        return user;
+    }
 }
