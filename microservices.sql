@@ -3,6 +3,8 @@ CREATE DATABASE IF NOT EXISTS orders;
 CREATE DATABASE IF NOT EXISTS videos;
 CREATE DATABASE IF NOT EXISTS advertisement;
 
+CREATE DATABASE data_for_educationdata_for_education CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS users.contact_info 
 (id int PRIMARY KEY auto_increment,
  firstName varchar(50) not null,
